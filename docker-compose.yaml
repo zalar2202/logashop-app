@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: logatech-net
+    ports:
+      - "3000:3000"
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - ./storage:/app/storage
+    networks:
+      - coolify
+
+networks:
+  coolify:
+    external: true

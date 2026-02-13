@@ -1,0 +1,54 @@
+/* ===================================
+   LogaTech Design Tokens (Shared)
+   Website + Panel use these colors.
+   Panel adopts website palette; website defines the brand.
+   =================================== */
+
+:root {
+    /* Primary (Homepage, global CTA, header "Let's Talk") - Persian Indigo */
+    --color-primary: #32127a;
+    --color-primary-hover: #4a1a9a;
+    --color-primary-dark: #1e0b4a;
+
+    /* Service-specific colors (website service pages) */
+    --design-color: #7c3aed;
+    --design-color-hover: #6d28d9;
+    --develop-color: #3b82f6;
+    --develop-color-hover: #2563eb;
+    --deploy-color: #10b981;
+    --deploy-color-hover: #059669;
+    --maintain-color: #f59e0b;
+    --maintain-color-hover: #d97706;
+}
+
+/* Dark mode: primary stays visible (#8b5cf6); Design has its own distinct color */
+[data-theme="dark"] {
+    --color-primary: #8b5cf6;
+    --color-primary-hover: #a78bfa;
+    --color-primary-dark: #6d28d9;
+    --design-color: #c4b5fd;
+    --design-color-hover: #ddd6fe;
+    --develop-color: #60a5fa;
+    --develop-color-hover: #3b82f6;
+    --deploy-color: #34d399;
+    --deploy-color-hover: #10b981;
+    --maintain-color: #fbbf24;
+    --maintain-color-hover: #f59e0b;
+}
+
+/* System preference fallback (no manual theme set) */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        --color-primary: #8b5cf6;
+        --color-primary-hover: #a78bfa;
+        --color-primary-dark: #6d28d9;
+        --design-color: #c4b5fd;
+        --design-color-hover: #ddd6fe;
+        --develop-color: #60a5fa;
+        --develop-color-hover: #3b82f6;
+        --deploy-color: #34d399;
+        --deploy-color-hover: #10b981;
+        --maintain-color: #fbbf24;
+        --maintain-color-hover: #f59e0b;
+    }
+}

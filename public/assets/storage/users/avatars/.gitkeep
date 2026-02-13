@@ -1,0 +1,3 @@
+# This file ensures the directory exists in Git
+# Actual uploaded avatar files are ignored via .gitignore
+

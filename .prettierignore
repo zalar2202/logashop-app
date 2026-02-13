@@ -1,0 +1,11 @@
+.next
+node_modules
+out
+build
+package-lock.json
+.cursor
+.continue
+.vscode
+.console-ninja
+postcss.config.mjs
+

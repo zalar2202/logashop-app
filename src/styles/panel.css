@@ -1,0 +1,232 @@
+@import "./tokens.css";
+
+/* ===================================
+   Theme System - CSS Custom Properties
+   =================================== */
+
+/* Light Mode (Default) - primary from tokens.css */
+:root {
+    /* Colors (primary from tokens; semantic below) */
+    --color-primary-light: rgba(50, 18, 122, 0.12);
+    --color-success: #16a34a;
+    --color-success-surface: #dcfce7;
+    --color-success-foreground: #166534;
+    --color-error: #dc2626;
+    --color-error-surface: #fee2e2;
+    --color-error-foreground: #991b1b;
+    --color-warning: #d97706;
+    --color-warning-surface: #fef3c7;
+    --color-warning-foreground: #92400e;
+    --color-info: #0891b2;
+    --color-info-surface: #e0f2fe;
+    --color-info-foreground: #075985;
+
+    /* Backgrounds */
+    --color-background: #ffffff;
+    --color-background-secondary: #f9fafb;
+    --color-background-tertiary: #f3f4f6;
+    --color-background-elevated: #ffffff;
+    --color-secondary: #f3f4f6;
+    --color-card-bg: #ffffff;
+    --color-card-background: #ffffff;
+
+    /* Text */
+    --color-text-primary: #111827;
+    --color-text-secondary: #6b7280;
+    --color-text-tertiary: #9ca3af;
+    --color-text-inverse: #ffffff;
+
+    /* Borders */
+    --color-border: #e5e7eb;
+    --color-border-subtle: #f3f4f6;
+
+    /* Interactive States */
+    --color-hover: #f3f4f6;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Dark Mode (primary from tokens) */
+[data-theme="dark"] {
+    /* Colors */
+    --color-primary-light: rgba(139, 92, 246, 0.15);
+    --color-success: #4ade80;
+    --color-success-surface: #143021;
+    --color-success-foreground: #bbf7d0;
+    --color-error: #f87171;
+    --color-error-surface: #2d1111;
+    --color-error-foreground: #fca5a5;
+    --color-warning: #fbbf24;
+    --color-warning-surface: #322005;
+    --color-warning-foreground: #fcd34d;
+    --color-info: #22d3ee;
+    --color-info-surface: #0b1f2e;
+    --color-info-foreground: #7dd3fc;
+
+    /* Backgrounds */
+    --color-background: #0f1117;
+    --color-background-secondary: #16171d;
+    --color-background-tertiary: #1e1f26;
+    --color-background-elevated: #24252d;
+    --color-secondary: #1e1f26;
+    --color-card-bg: #1e1f26;
+    --color-card-background: #1e1f26;
+
+    /* Text */
+    --color-text-primary: #f0f0f0;
+    --color-text-secondary: #a8a9b4;
+    --color-text-tertiary: #6b6c7b;
+    --color-text-inverse: #ffffff;
+
+    /* Borders */
+    --color-border: #2a2b35;
+    --color-border-subtle: #1e1f26;
+
+    /* Interactive States */
+    --color-hover: #2a2b35;
+
+    /* Shadows with subtle glow */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.6);
+    --shadow-md:
+        0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -1px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.02);
+    --shadow-lg:
+        0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -2px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.03);
+    --shadow-xl:
+        0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* System Preference Fallback (primary from tokens) */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        --color-success: #4ade80;
+        --color-success-surface: #143021;
+        --color-success-foreground: #bbf7d0;
+        --color-error: #f87171;
+        --color-warning: #fbbf24;
+        --color-info: #22d3ee;
+        --color-background: #0f1117;
+        --color-background-secondary: #16171d;
+        --color-background-tertiary: #1e1f26;
+        --color-background-elevated: #24252d;
+        --color-card-bg: #1e1f26;
+        --color-card-background: #1e1f26;
+        --color-text-primary: #f0f0f0;
+        --color-text-secondary: #a8a9b4;
+        --color-text-tertiary: #6b6c7b;
+        --color-text-inverse: #ffffff;
+        --color-border: #2a2b35;
+        --color-border-subtle: #1e1f26;
+        --color-hover: #2a2b35;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.6);
+        --shadow-md:
+            0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -1px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.02);
+        --shadow-lg:
+            0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -2px rgba(0, 0, 0, 0.5),
+            0 0 0 1px rgba(255, 255, 255, 0.03);
+        --shadow-xl:
+            0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.6),
+            0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+}
+
+/* ===================================
+   Base Styles
+   =================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    overflow-x: hidden;
+}
+
+html,
+body {
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+body {
+    font-family:
+        var(--font-inter),
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    color: var(--color-text-primary);
+    background: var(--color-background);
+    transition:
+        background-color 200ms ease-in-out,
+        color 200ms ease-in-out;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* Header Normalization for Panel (override website leakage) */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-inter), sans-serif !important;
+    letter-spacing: -0.01em;
+}
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.75rem !important;
+    }
+    h2 {
+        font-size: 1.5rem !important;
+    }
+    h3 {
+        font-size: 1.25rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5rem !important;
+    }
+}
+
+/* ===================================
+   Custom Scrollbar
+   =================================== */
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--color-background-secondary);
+    border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #4b5563;
+}
+
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}

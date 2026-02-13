@@ -21,6 +21,8 @@ services:
         - NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
         - NEXT_PUBLIC_FIREBASE_VAPID_KEY
         - STRIPE_SECRET_KEY
+        - MONGO_URI
+        - JWT_SECRET
     container_name: logatech-net
     ports:
       - "3000:3000"

@@ -23,9 +23,8 @@ import { Pagination } from "@/components/common/Pagination";
 import { Avatar } from "@/components/common/Avatar";
 import { InputField } from "@/components/forms/InputField";
 import { SelectField } from "@/components/forms/SelectField";
-import { Users, Plus, Search, Filter, ShoppingCart, Package } from "lucide-react";
+import { Users, Plus, Search, Filter } from "lucide-react";
 import { ContentWrapper } from "@/components/layout/ContentWrapper";
-import axios from "axios";
 
 function UsersPageContent() {
     const router = useRouter();
@@ -44,13 +43,6 @@ function UsersPageContent() {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
-
-    // Cart Assignment State
-    const [cartModalOpen, setCartModalOpen] = useState(false);
-    const [selectedUserForCart, setSelectedUserForCart] = useState(null);
-    const [packages, setPackages] = useState([]);
-    const [selectedPackage, setSelectedPackage] = useState("");
-    const [isAssigning, setIsAssigning] = useState(false);
 
     // Update URL with current state
     const updateUrl = useCallback(
@@ -221,38 +213,6 @@ function UsersPageContent() {
             toast.error(error.message || "Failed to delete user");
         } finally {
             setIsDeleting(false);
-        }
-    };
-
-    // Fetch packages for assignment
-    useEffect(() => {
-        const fetchPackagesFunc = async () => {
-            try {
-                const { data } = await axios.get("/api/packages");
-                if (data.success) setPackages(data.data || []);
-            } catch (err) {
-                console.error("Failed to fetch packages");
-            }
-        };
-        fetchPackagesFunc();
-    }, []);
-
-    const handleAssignPackage = async () => {
-        if (!selectedUserForCart || !selectedPackage) return;
-        setIsAssigning(true);
-        try {
-            await axios.post("/api/cart", {
-                userId: selectedUserForCart._id,
-                packageId: selectedPackage,
-                quantity: 1,
-            });
-            toast.success(`Package added to ${selectedUserForCart.name}'s cart`);
-            setCartModalOpen(false);
-            setSelectedPackage("");
-        } catch (err) {
-            toast.error(err.response?.data?.error || "Failed to assign package");
-        } finally {
-            setIsAssigning(false);
         }
     };
 
@@ -470,16 +430,6 @@ function UsersPageContent() {
                                         </TableCell>
                                         <TableCell align="right">
                                             <div className="flex items-center justify-end gap-1">
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedUserForCart(user);
-                                                        setCartModalOpen(true);
-                                                    }}
-                                                    className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-indigo-600 rounded-md transition-colors"
-                                                    title="Assign Package to Cart"
-                                                >
-                                                    <ShoppingCart size={16} />
-                                                </button>
                                                 <TableActions
                                                     onView={() =>
                                                         router.push(`/panel/users/${user._id}`)
@@ -531,65 +481,6 @@ function UsersPageContent() {
                         </Button>
                         <Button variant="danger" onClick={confirmDelete} loading={isDeleting}>
                             Delete
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
-            {/* Assign Package Modal */}
-            <Modal
-                isOpen={cartModalOpen}
-                onClose={() => setCartModalOpen(false)}
-                title="Assign Package to User Cart"
-            >
-                <div className="space-y-6">
-                    <div className="flex items-center gap-3 p-3 bg-indigo-50 dark:bg-indigo-900/10 rounded-lg">
-                        <Avatar src={selectedUserForCart?.avatar} size="sm" />
-                        <div>
-                            <p className="text-sm font-bold text-indigo-900 dark:text-indigo-100">
-                                {selectedUserForCart?.name}
-                            </p>
-                            <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70">
-                                {selectedUserForCart?.email}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">
-                            Select Package
-                        </label>
-                        <div className="relative">
-                            <Package
-                                size={18}
-                                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
-                            />
-                            <select
-                                value={selectedPackage}
-                                onChange={(e) => setSelectedPackage(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-background)]"
-                            >
-                                <option value="">Select a package...</option>
-                                {packages.map((pkg) => (
-                                    <option key={pkg._id} value={pkg._id}>
-                                        {pkg.name} - ${pkg.price || pkg.startingPrice}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-3 justify-end pt-4">
-                        <Button variant="secondary" onClick={() => setCartModalOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="primary"
-                            onClick={handleAssignPackage}
-                            disabled={!selectedPackage}
-                            loading={isAssigning}
-                            icon={<Plus size={18} />}
-                        >
-                            Add to Cart
                         </Button>
                     </div>
                 </div>

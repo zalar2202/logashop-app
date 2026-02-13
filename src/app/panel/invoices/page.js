@@ -36,8 +36,9 @@ import * as Yup from "yup";
 import { useSearchParams } from "next/navigation";
 
 const invoiceSchema = Yup.object().shape({
-    client: Yup.string().required("Client is required"),
-    invoiceNumber: Yup.string(), // Auto-generated if empty
+    user: Yup.string().nullable(),
+    orderId: Yup.string().nullable(),
+    invoiceNumber: Yup.string(),
     issueDate: Yup.date().required("Issue date is required"),
     dueDate: Yup.date().required("Due date is required"),
     status: Yup.string().oneOf(["draft", "sent", "partial", "paid", "overdue", "cancelled"]),
@@ -52,6 +53,8 @@ const invoiceSchema = Yup.object().shape({
         .min(1, "At least one item is required"),
     notes: Yup.string(),
     taxRate: Yup.number().min(0).max(100),
+}).test("user-or-order", "Either Customer or Order is required", function (value) {
+    return !!(value?.user || value?.orderId);
 });
 
 function InvoicesPageContent() {
@@ -61,8 +64,8 @@ function InvoicesPageContent() {
     const isAdmin = ["admin", "manager"].includes(user?.role);
 
     const [invoices, setInvoices] = useState([]);
-    const [clients, setClients] = useState([]);
-    const [packages, setPackages] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
 
@@ -75,7 +78,7 @@ function InvoicesPageContent() {
 
     useEffect(() => {
         const init = async () => {
-            await Promise.all([fetchInvoices(), fetchClients(), fetchPackages()]);
+            await Promise.all([fetchInvoices(), fetchUsers(), fetchOrders()]);
         };
         init();
     }, []);
@@ -107,21 +110,23 @@ function InvoicesPageContent() {
         return [];
     };
 
-    const fetchClients = async () => {
+    const fetchUsers = async () => {
         try {
-            const { data } = await axios.get("/api/clients");
-            if (data.success) setClients(data.data || []);
+            const { data } = await axios.get("/api/users?limit=500");
+            if (data?.data) setUsers(Array.isArray(data.data) ? data.data : []);
+            else if (data?.success && Array.isArray(data.data)) setUsers(data.data);
         } catch (error) {
-            console.error("Failed to fetch clients");
+            console.error("Failed to fetch users");
         }
     };
 
-    const fetchPackages = async () => {
+    const fetchOrders = async () => {
         try {
-            const { data } = await axios.get("/api/packages");
-            if (data.success) setPackages(data.data || []);
+            const { data } = await axios.get("/api/orders?limit=200");
+            if (data?.success && Array.isArray(data.data)) setOrders(data.data);
+            else if (Array.isArray(data?.orders)) setOrders(data.orders);
         } catch (error) {
-            console.error("Failed to fetch packages");
+            console.error("Failed to fetch orders");
         }
     };
 
@@ -162,8 +167,8 @@ function InvoicesPageContent() {
     };
 
     const handleSendInvoice = async (inv) => {
-        if (!inv.client?.email) {
-            toast.error("Client has no email address");
+        if (!inv.user?.email) {
+            toast.error("Customer has no email address");
             return;
         }
         setSendingId(inv._id);
@@ -192,8 +197,9 @@ function InvoicesPageContent() {
 
     const filteredInvoices = invoices.filter(
         (inv) =>
-            inv.invoiceNumber.toLowerCase().includes(search.toLowerCase()) ||
-            inv.client?.name?.toLowerCase().includes(search.toLowerCase())
+            inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
+            inv.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
+            inv.user?.email?.toLowerCase().includes(search.toLowerCase())
     );
 
     // Calculate totals for live preview
@@ -218,7 +224,7 @@ function InvoicesPageContent() {
                         Invoices
                     </h1>
                     <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-                        Manage client billing and track payments.
+                        Manage invoices and track payments.
                     </p>
                 </div>
                 {["admin", "manager"].includes(user?.role) && (
@@ -249,7 +255,7 @@ function InvoicesPageContent() {
                                     Invoice Details
                                 </th>
                                 <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)]">
-                                    Client
+                                    Customer
                                 </th>
                                 <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)]">
                                     Date
@@ -300,10 +306,10 @@ function InvoicesPageContent() {
                                         <td className="p-4">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-[var(--color-text-primary)]">
-                                                    {inv.client?.name || "Unknown"}
+                                                    {inv.user?.name || inv.orderId?.orderNumber || "—"}
                                                 </span>
                                                 <span className="text-xs text-[var(--color-text-secondary)]">
-                                                    {inv.client?.email}
+                                                    {inv.user?.email || (inv.orderId ? `Order ${inv.orderId.orderNumber}` : "")}
                                                 </span>
                                             </div>
                                         </td>
@@ -457,7 +463,7 @@ function InvoicesPageContent() {
                                                             }}
                                                             disabled={sendingId === inv._id}
                                                             className="p-1.5 rounded hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 transition-colors disabled:opacity-50"
-                                                            title="Send to client"
+                                                            title="Send to customer"
                                                         >
                                                             {sendingId === inv._id ? (
                                                                 <span className="animate-spin">
@@ -531,8 +537,8 @@ function InvoicesPageContent() {
             >
                 <Formik
                     initialValues={{
-                        client: selectedInvoice?.client?._id || selectedInvoice?.client || "",
-                        package: selectedInvoice?.package?._id || selectedInvoice?.package || "",
+                        user: selectedInvoice?.user?._id || selectedInvoice?.user || "",
+                        orderId: selectedInvoice?.orderId?._id || selectedInvoice?.orderId || "",
                         invoiceNumber: selectedInvoice?.invoiceNumber || "",
                         issueDate: selectedInvoice?.issueDate
                             ? new Date(selectedInvoice.issueDate).toISOString().split("T")[0]
@@ -563,22 +569,19 @@ function InvoicesPageContent() {
                         return (
                             <Form className="space-y-6">
                                 <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                                    <SelectField name="client" label="Client">
-                                        <option value="">-- Select Client --</option>
-                                        {clients.map((c) => (
-                                            <option key={c._id} value={c._id}>
-                                                {c.name}
+                                    <SelectField name="user" label="Customer">
+                                        <option value="">-- Select Customer --</option>
+                                        {users.map((u) => (
+                                            <option key={u._id} value={u._id}>
+                                                {u.name} {u.email ? `(${u.email})` : ""}
                                             </option>
                                         ))}
                                     </SelectField>
-                                    <SelectField
-                                        name="package"
-                                        label="Linked Package (Auto-Activation)"
-                                    >
+                                    <SelectField name="orderId" label="Link to Order">
                                         <option value="">-- None --</option>
-                                        {packages.map((p) => (
-                                            <option key={p._id} value={p._id}>
-                                                {p.name} (${p.price})
+                                        {orders.map((o) => (
+                                            <option key={o._id} value={o._id}>
+                                                {o.orderNumber} — ${((o.total || 0) / 100).toFixed(2)}
                                             </option>
                                         ))}
                                     </SelectField>
@@ -785,10 +788,10 @@ function InvoicesPageContent() {
                                     Bill To
                                 </p>
                                 <p className="font-bold text-lg text-[var(--color-text-primary)]">
-                                    {selectedInvoice.client?.name || "Unknown Client"}
+                                    {selectedInvoice.user?.name || selectedInvoice.orderId?.orderNumber || "—"}
                                 </p>
                                 <p className="text-sm text-[var(--color-text-secondary)]">
-                                    {selectedInvoice.client?.email}
+                                    {selectedInvoice.user?.email || (selectedInvoice.orderId ? `Order ${selectedInvoice.orderId.orderNumber}` : "")}
                                 </p>
                             </div>
                             <div className="text-right">

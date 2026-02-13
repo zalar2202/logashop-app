@@ -329,7 +329,7 @@ export const notifyLowStock = async (products, threshold = 5) => {
             title: `⚠️ Low Stock Alert: ${products.length} product${products.length !== 1 ? "s" : ""}`,
             message: `${products.map((p) => `${p.name} (${p.stockQuantity} left)`).join(", ")}`,
             type: "warning",
-            actionUrl: "/panel/shop",
+            actionUrl: "/panel/admin/products",
             actionLabel: "Manage Products",
         });
         results.notifications = notifResult.created;

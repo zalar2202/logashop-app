@@ -11,8 +11,11 @@
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "seed:admin": "node src/scripts/seedAdmin.js",
+        "seed:manager": "node src/scripts/seedManager.js",
         "seed:categories": "node src/scripts/seedCategories.js",
         "seed:products": "node src/scripts/seedProducts.js",
+        "seed:shipping-zones": "node src/scripts/seedShippingZones.js",
+        "seed:users": "node src/scripts/seedUsers.js",
         "seed:all": "node src/scripts/seedAll.js",
         "seed:all:force": "node src/scripts/seedAll.js --force"
     },

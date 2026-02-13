@@ -368,7 +368,7 @@ export const lowStockAlertEmail = (products) => {
         </table>
 
         <div style="text-align:center;margin-top:32px;">
-            ${button("Manage Products", `${APP_URL}/panel/shop`, "#f59e0b")}
+            ${button("Manage Products", `${APP_URL}/panel/admin/products`, "#f59e0b")}
         </div>
     `;
 

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import Invoice from "@/models/Invoice";
-import Client from "@/models/Client"; // Ensure model is loaded
 import { verifyAuth } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import { convertToBaseCurrency } from "@/lib/currency";
@@ -23,22 +22,23 @@ export async function GET(request) {
         }
 
         const { searchParams } = new URL(request.url);
-        const clientId = searchParams.get("clientId");
+        const userId = searchParams.get("userId");
+        const orderId = searchParams.get("orderId");
         const status = searchParams.get("status");
 
-        // Build Query
         const query = {};
-        if (clientId) query.client = clientId;
+        if (userId) query.user = userId;
+        if (orderId) query.orderId = orderId;
         if (status && status !== "all") query.status = status;
 
         if (!["admin", "manager"].includes(user.role)) {
-            // If regular user, only show invoices linked to their user ID
             query.user = user._id;
             query.status = { $ne: "draft" };
         }
 
         const invoices = await Invoice.find(query)
-            .populate("client", "name email")
+            .populate("user", "name email")
+            .populate("orderId", "orderNumber")
             .sort({ createdAt: -1 });
 
         return NextResponse.json({ success: true, data: invoices });
@@ -59,14 +59,18 @@ export async function POST(request) {
 
         const body = await request.json();
 
-        // Sanitize ObjectIds
-        if (body.package === "") body.package = null;
-        if (body.client === "") body.client = null;
         if (body.user === "") body.user = null;
+        if (body.orderId === "") body.orderId = null;
 
-        if (!body.client || !body.items || body.items.length === 0) {
+        if (!body.items || body.items.length === 0) {
             return NextResponse.json(
-                { error: "Client and at least one item are required" },
+                { error: "At least one item is required" },
+                { status: 400 }
+            );
+        }
+        if (!body.user && !body.orderId) {
+            return NextResponse.json(
+                { error: "Either user (customer) or orderId is required" },
                 { status: 400 }
             );
         }

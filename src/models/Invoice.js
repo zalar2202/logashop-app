@@ -19,19 +19,13 @@ const InvoiceSchema = new mongoose.Schema(
             uppercase: true,
             trim: true,
         },
-        client: {
+        orderId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Client",
-            required: true,
+            ref: "Order",
         },
         user: {
-            // Optional link to a specific user account for billing visibility
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-        },
-        package: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Package",
         },
         status: {
             type: String,
@@ -92,6 +86,8 @@ const InvoiceSchema = new mongoose.Schema(
 );
 
 // Index for searching
-InvoiceSchema.index({ invoiceNumber: 1, client: 1, status: 1 });
+InvoiceSchema.index({ invoiceNumber: 1, status: 1 });
+InvoiceSchema.index({ orderId: 1 });
+InvoiceSchema.index({ user: 1 });
 
 export default mongoose.models.Invoice || mongoose.model("Invoice", InvoiceSchema);

@@ -15,7 +15,7 @@ import { CreditCard, Plus, Search, Trash2, Edit, DollarSign, TrendingUp, Calenda
 import * as Yup from "yup";
 
 const paymentSchema = Yup.object().shape({
-    client: Yup.string().required("Client is required"),
+    userId: Yup.string().required("Customer is required"),
     amount: Yup.number().min(0.01, "Amount must be greater than 0").required("Amount is required"),
     method: Yup.string().required("Payment method is required"),
     status: Yup.string(),
@@ -27,7 +27,7 @@ const paymentSchema = Yup.object().shape({
 
 export default function PaymentsPage() {
     const [payments, setPayments] = useState([]);
-    const [clients, setClients] = useState([]);
+    const [users, setUsers] = useState([]);
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -36,7 +36,7 @@ export default function PaymentsPage() {
 
     useEffect(() => {
         fetchPayments();
-        fetchClients();
+        fetchUsers();
         fetchInvoices();
     }, []);
 
@@ -52,12 +52,13 @@ export default function PaymentsPage() {
         }
     };
 
-    const fetchClients = async () => {
+    const fetchUsers = async () => {
         try {
-            const { data } = await axios.get("/api/clients");
-            if (data.success) setClients(data.data || []);
+            const { data } = await axios.get("/api/users?limit=500");
+            if (data?.data && Array.isArray(data.data)) setUsers(data.data);
+            else if (data?.success && Array.isArray(data.data)) setUsers(data.data);
         } catch (error) {
-            console.error("Failed to fetch clients");
+            console.error("Failed to fetch users");
         }
     };
 
@@ -120,7 +121,8 @@ export default function PaymentsPage() {
     };
 
     const filteredPayments = payments.filter(p =>
-        p.client?.name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.userId?.name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.userId?.email?.toLowerCase().includes(search.toLowerCase()) ||
         p.reference?.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -137,7 +139,7 @@ export default function PaymentsPage() {
                         Payments
                     </h1>
                     <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-                        Track and manage all client payments.
+                        Track and manage customer payments.
                     </p>
                 </div>
                 <Button icon={<Plus className="w-4 h-4" />} onClick={openCreateModal}>
@@ -194,7 +196,7 @@ export default function PaymentsPage() {
                         <thead>
                             <tr className="border-b dark:border-gray-700">
                                 <th className="p-4 font-semibold text-sm text-gray-500">Date</th>
-                                <th className="p-4 font-semibold text-sm text-gray-500">Client</th>
+                                <th className="p-4 font-semibold text-sm text-gray-500">Customer</th>
                                 <th className="p-4 font-semibold text-sm text-gray-500">Amount</th>
                                 <th className="p-4 font-semibold text-sm text-gray-500">Method</th>
                                 <th className="p-4 font-semibold text-sm text-gray-500">Status</th>
@@ -211,7 +213,7 @@ export default function PaymentsPage() {
                                 filteredPayments.map((payment) => (
                                     <tr key={payment._id} className="border-b last:border-0 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                         <td className="p-4 text-sm">{new Date(payment.paymentDate).toLocaleDateString()}</td>
-                                        <td className="p-4 font-medium">{payment.client?.name || "Unknown"}</td>
+                                        <td className="p-4 font-medium">{payment.userId?.name || payment.userId?.email || "—"}</td>
                                         <td className="p-4 font-bold text-green-600">${payment.amount?.toFixed(2)}</td>
                                         <td className="p-4 text-sm capitalize">{payment.method?.replace('_', ' ')}</td>
                                         <td className="p-4">
@@ -241,7 +243,7 @@ export default function PaymentsPage() {
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={selectedPayment ? "Edit Payment" : "Record Payment"} size="lg">
                 <Formik
                     initialValues={{
-                        client: selectedPayment?.client?._id || "",
+                        userId: selectedPayment?.userId?._id || selectedPayment?.userId || "",
                         amount: selectedPayment?.amount || "",
                         method: selectedPayment?.method || "bank_transfer",
                         status: selectedPayment?.status || "completed",
@@ -256,10 +258,10 @@ export default function PaymentsPage() {
                 >
                     {({ isSubmitting }) => (
                         <Form className="space-y-4">
-                            <SelectField name="client" label="Client">
-                                <option value="">-- Select Client --</option>
-                                {clients.map(c => (
-                                    <option key={c._id} value={c._id}>{c.name}</option>
+                            <SelectField name="userId" label="Customer">
+                                <option value="">-- Select Customer --</option>
+                                {users.map(u => (
+                                    <option key={u._id} value={u._id}>{u.name} {u.email ? `(${u.email})` : ""}</option>
                                 ))}
                             </SelectField>
 

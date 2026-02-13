@@ -6,7 +6,6 @@ import productsReducer from "@/features/products/productsSlice";
 // Import other slices here as we create them
 // import companiesReducer from "@/features/companies/companiesSlice";
 // import transactionsReducer from "@/features/transactions/transactionsSlice";
-// import packagesReducer from "@/features/packages/packagesSlice";
 // import paymentsReducer from "@/features/payments/paymentsSlice";
 // import promotionsReducer from "@/features/promotions/promotionsSlice";
 
@@ -19,7 +18,6 @@ export const makeStore = () => {
             // Add other reducers here as we create them
             // companies: companiesReducer,
             // transactions: transactionsReducer,
-            // packages: packagesReducer,
             // payments: paymentsReducer,
             // promotions: promotionsReducer,
         },
@@ -42,6 +40,5 @@ export const selectUsers = (state) => state.users;
 export const selectNotifications = (state) => state.notifications;
 export const selectCompanies = (state) => state.companies;
 export const selectTransactions = (state) => state.transactions;
-export const selectPackages = (state) => state.packages;
 export const selectPayments = (state) => state.payments;
 export const selectPromotions = (state) => state.promotions;

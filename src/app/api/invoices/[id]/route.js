@@ -15,7 +15,9 @@ export async function GET(request, { params }) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const invoice = await Invoice.findById(id).populate("client");
+        const invoice = await Invoice.findById(id)
+            .populate("user", "name email")
+            .populate("orderId", "orderNumber");
 
         if (!invoice) {
             return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
@@ -52,9 +54,8 @@ export async function PUT(request, { params }) {
             return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
         }
 
-        if (body.package === "") body.package = null;
-        if (body.client === "") body.client = null;
         if (body.user === "") body.user = null;
+        if (body.orderId === "") body.orderId = null;
 
         if (body.items || body.taxRate !== undefined || body.promotion) {
             const items = body.items || oldInvoice.items || [];
@@ -100,7 +101,9 @@ export async function PUT(request, { params }) {
             id,
             { $set: body },
             { new: true, runValidators: true }
-        ).populate("client");
+        )
+            .populate("user", "name email")
+            .populate("orderId", "orderNumber");
 
         return NextResponse.json({ success: true, data: invoice });
     } catch (error) {

@@ -19,13 +19,13 @@ export const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
 
 // Storage Keys (for localStorage - not for JWT token which is in httpOnly cookie)
 export const STORAGE_KEYS = {
-    USER: "logatech_user", // Optional: store non-sensitive user data for UI
-    THEME: "logatech_theme",
+    USER: "logashop_user", // Optional: store non-sensitive user data for UI
+    THEME: "logashop_theme",
 };
 
 // Cookie Names (server-side only, httpOnly)
 export const COOKIE_NAMES = {
-    TOKEN: "logatech_auth_token", // JWT token stored as httpOnly cookie
+    TOKEN: "logashop_auth_token", // JWT token stored as httpOnly cookie
 };
 
 // Pagination

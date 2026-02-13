@@ -56,13 +56,18 @@ export async function GET(request) {
             ]);
             csvContent = [headers, ...rows].map((e) => e.join(",")).join("\n");
         } else if (type === "invoices") {
-            const data = await Invoice.find().populate("client").sort({ createdAt: -1 }).lean();
+            const data = await Invoice.find()
+                .populate("user", "name email")
+                .populate("orderId", "orderNumber")
+                .sort({ createdAt: -1 })
+                .lean();
             filename = `invoices-report-${new Date().toISOString().split("T")[0]}.csv`;
 
             const headers = [
                 "Invoice #",
                 "Date",
-                "Client",
+                "Customer",
+                "Order #",
                 "Amount",
                 "Currency",
                 "Status",
@@ -71,7 +76,8 @@ export async function GET(request) {
             const rows = data.map((inv) => [
                 escapeCSV(inv.invoiceNumber),
                 escapeCSV(new Date(inv.issueDate || inv.createdAt).toLocaleDateString()),
-                escapeCSV(inv.client?.name || "N/A"),
+                escapeCSV(inv.user?.name || inv.user?.email || "N/A"),
+                escapeCSV(inv.orderId?.orderNumber || "—"),
                 escapeCSV(inv.total),
                 escapeCSV(inv.currency),
                 escapeCSV(inv.status),

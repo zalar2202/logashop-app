@@ -182,11 +182,10 @@ export default function InvoicePrintPage() {
                                 Bill To
                             </h4>
                             <div className="text-gray-900 dark:text-white">
-                                <p className="text-lg font-bold">{invoice.client?.name}</p>
+                                <p className="text-lg font-bold">{invoice.user?.name || (invoice.orderId ? `Order ${invoice.orderId?.orderNumber}` : "—")}</p>
                                 <div className="text-gray-500 dark:text-gray-400 text-sm mt-2 space-y-1">
-                                    <p>{invoice.client?.email}</p>
-                                    <p>{invoice.client?.phone}</p>
-                                    <p>{invoice.client?.address}</p>
+                                    {invoice.user?.email && <p>{invoice.user.email}</p>}
+                                    {invoice.user?.phone && <p>{invoice.user.phone}</p>}
                                 </div>
                             </div>
                         </div>
@@ -245,7 +244,7 @@ export default function InvoicePrintPage() {
                                 <>
                                     <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-between">
                                         <span className="text-sm font-bold text-gray-900 dark:text-white">
-                                            Total Package Value
+                                            Total
                                         </span>
                                         <span className="text-lg font-bold text-gray-900 dark:text-white">
                                             ${invoice.total.toFixed(2)}

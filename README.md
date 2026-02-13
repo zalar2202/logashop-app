@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# LogaShop
 
-## Getting Started
+A modern e-commerce platform built with **Next.js** — storefront, checkout with Stripe, and a full admin panel for products, orders, customers, and more.
 
-First, run the development server:
+## What it does
+
+- **Storefront** — Browse products and categories, cart, wishlist, guest or registered checkout
+- **Payments** — Stripe (payment intents, webhooks)
+- **Digital & physical products** — Inventory, variants, secure downloads for digital goods
+- **Customer accounts** — Profile, addresses, order history, order tracking
+- **Admin panel** — Dashboard, catalog (products/categories), orders, coupons, reviews, shipping zones, blog, CRM, invoicing, accounting, support tickets, media library, and more
+
+## Tech stack
+
+Next.js 16 · React 19 · MongoDB (Mongoose) · Stripe · Firebase (notifications) · Tailwind CSS v4 · JWT auth (httpOnly cookies)
+
+## Getting started
 
 ```bash
+npm install
+# Create .env.local with MONGO_URI, Stripe keys, etc. (see docs/README.md)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app runs on the port defined in `package.json`. For seed data (admin user, sample categories/products), see the `seed:*` scripts in `package.json`.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+**Requirements:** Node.js, MongoDB, Stripe account (for payments). Optional: Firebase and SMTP for notifications and email.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Documentation
 
-## Learn More
+Developers: see **[docs/README.md](docs/README.md)** for the full developer guide — scope, data models, implementation roadmap, and setup details.
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private / see repository settings.

@@ -1,8 +1,9 @@
 # Data Models & Schema Design
 
-This document outlines the database entities and their relationships for LogaShop.
+Database entities and their relationships for LogaShop. Part of the [Developer Guide](README.md).
 
 ---
+
 
 ## Entity Relationship Overview
 
@@ -15,7 +16,6 @@ erDiagram
 
     Product ||--o{ ProductVariant : has
     Product }o--|| Category : belongsTo
-    Product ||--o{ ProductImage : has
     Product ||--o{ Review : receives
     Product }o--o{ Tag : has
 
@@ -23,14 +23,15 @@ erDiagram
     ProductVariant ||--o{ OrderItem : orderedAs
 
     Order ||--o{ OrderItem : contains
-    Order }o--|| ShippingZone : shippedTo
-    Order ||--o| Payment : paidWith
     Order ||--o| DigitalDelivery : delivers
 
     Cart ||--o{ CartItem : contains
 
     Coupon ||--o{ Order : appliedTo
 ```
+
+- **Product images** are embedded in `Product` as `images[]` (no separate ProductImage collection).
+- **Order payment** is stored on `Order` (paymentIntentId, paidAt, paymentStatus, paymentMethod). A separate `Payment` model exists for CRM/Invoice flows (see Other models).
 
 ---
 
@@ -42,29 +43,38 @@ erDiagram
 User {
   _id: ObjectId,
   email: String (unique),
-  password: String (hashed),
+  password: String (hashed, select: false),
+  googleId: String (unique, sparse),
   name: String,
-  role: 'customer' | 'admin' | 'manager' | 'vendor',
+  role: 'admin' | 'manager' | 'user',
   status: 'active' | 'inactive' | 'suspended',
-  avatar: String,
-  fcmToken: String,
-  lastLogin: Date,
-  createdAt: Date,
-  updatedAt: Date,
-
-  // New e-commerce fields
   phone: String,
-  defaultAddressId: ObjectId (ref: Address),
+  avatar: String,
+  bio: String,
 
-  // Vendor fields (for future multi-vendor)
-  vendorProfile: {
-    storeName: String,
-    storeSlug: String,
-    description: String,
-    logo: String,
-    verified: Boolean,
-    commission: Number  // percentage platform takes
-  }
+  technicalDetails: { domainName, serverIP, serverUser, serverPassword, serverPort },
+  preferences: {
+    emailNotifications: Boolean,
+    pushNotifications: Boolean,
+    notificationFrequency: 'immediate' | 'daily' | 'weekly',
+    theme: 'light' | 'dark' | 'system',
+    language: String,
+    dateFormat: String,
+    profileVisibility: 'public' | 'private'
+  },
+
+  lastPasswordChange: Date,
+  lastLogin: Date,
+  accountDeactivatedAt: Date,
+  accountDeletedAt: Date,
+  dataExportRequests: [{ requestedAt, exportedAt, format: 'json' | 'csv' }],
+
+  fcmTokens: [{ token, device: 'web'|'ios'|'android', browser, createdAt, lastUsed }],
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+
+  createdAt: Date,
+  updatedAt: Date
 }
 ```
 
@@ -73,20 +83,20 @@ User {
 ```javascript
 Address {
   _id: ObjectId,
-  userId: ObjectId (ref: User, nullable for guest),
-  guestEmail: String (for guest checkout),
+  userId: ObjectId (ref: User, required),
 
-  type: 'shipping' | 'billing',
-  isDefault: Boolean,
-
-  fullName: String,
-  phone: String,
-  addressLine1: String,
-  addressLine2: String,
+  label: String,           // e.g. "Home", "Office"
+  firstName: String,
+  lastName: String,
+  company: String,
+  address1: String,
+  address2: String,
   city: String,
   state: String,
-  postalCode: String,
-  country: String (ISO 3166-1 alpha-2),
+  zipCode: String,
+  country: String (default "US"),
+  phone: String,
+  isDefault: Boolean,
 
   createdAt: Date,
   updatedAt: Date
@@ -108,13 +118,12 @@ Category {
   image: String,
 
   parentId: ObjectId (ref: Category, nullable),
-  ancestors: [ObjectId] (for efficient hierarchy queries),
+  ancestors: [{ _id: ObjectId, name: String, slug: String }],  // denormalized for hierarchy
   level: Number (0 = root),
 
   isActive: Boolean,
   sortOrder: Number,
 
-  // SEO
   metaTitle: String,
   metaDescription: String,
 
@@ -128,71 +137,49 @@ Category {
 ```javascript
 Product {
   _id: ObjectId,
-  vendorId: ObjectId (ref: User, for multi-vendor ready),
+  vendorId: ObjectId (ref: User, optional, multi-vendor ready),
 
-  // Basic Info
   name: String,
   slug: String (unique),
-  sku: String (base SKU),
-  description: String (rich text),
+  sku: String (unique),
+  description: String,
   shortDescription: String,
 
-  // Type
   productType: 'physical' | 'digital' | 'bundle',
-
-  // Categorization
   categoryId: ObjectId (ref: Category),
   tags: [String],
   brand: String,
 
-  // Pricing (in cents for accuracy)
-  basePrice: Number,
+  basePrice: Number (cents),
   salePrice: Number,
   salePriceStart: Date,
   salePriceEnd: Date,
 
-  // Status
   status: 'draft' | 'active' | 'archived',
   isFeatured: Boolean,
 
-  // Inventory (for simple products without variants)
   trackInventory: Boolean,
   stockQuantity: Number,
   lowStockThreshold: Number,
   allowBackorder: Boolean,
 
-  // Physical product fields
   weight: Number (grams),
-  dimensions: {
-    length: Number,
-    width: Number,
-    height: Number,
-    unit: 'cm' | 'in'
-  },
+  dimensions: { length, width, height, unit: 'cm' | 'in' },
 
-  // Digital product fields
-  digitalFile: {
-    url: String,
-    fileName: String,
-    fileSize: Number,
-    downloadLimit: Number,
-    expiryDays: Number
-  },
+  digitalFile: { url, fileName, fileSize, downloadLimit, expiryDays },
 
-  // Attributes (for variants)
-  attributes: [{
-    name: String,      // "Color", "Size"
-    values: [String]   // ["Red", "Blue"], ["S", "M", "L"]
-  }],
+  options: [{ name: String, values: [String] }],   // e.g. Color, Size
 
-  // SEO
+  images: [{ url, alt, isPrimary, sortOrder }],     // embedded, no separate collection
+
   metaTitle: String,
   metaDescription: String,
 
-  // Stats
   totalSold: Number,
   averageRating: Number,
   reviewCount: Number,
+
+  deletedAt: Date (soft delete),
 
   createdAt: Date,
   updatedAt: Date
@@ -207,21 +194,12 @@ ProductVariant {
   productId: ObjectId (ref: Product),
 
   sku: String (unique),
+  attributes: Map (String -> String),   // e.g. { "Color": "Red", "Size": "M" }
 
-  // Variant attributes (e.g., { color: "Red", size: "M" })
-  attributes: Object,
-
-  // Override pricing
   price: Number (null = use product basePrice),
   salePrice: Number,
-
-  // Inventory
   stockQuantity: Number,
-
-  // Override weight (for physical)
   weight: Number,
-
-  // Image specific to this variant
   image: String,
 
   isActive: Boolean,
@@ -231,111 +209,84 @@ ProductVariant {
 }
 ```
 
-### 6. ProductImage
-
-```javascript
-ProductImage {
-  _id: ObjectId,
-  productId: ObjectId (ref: Product),
-
-  url: String,
-  alt: String,
-  sortOrder: Number,
-  isPrimary: Boolean,
-
-  createdAt: Date
-}
-```
+(Product images are embedded in **Product** as `images[]`; there is no separate ProductImage model.)
 
 ---
 
 ## Order Models
 
-### 7. Cart
+### 6. Cart
 
 ```javascript
 Cart {
   _id: ObjectId,
 
-  // Either userId OR sessionId (for guest)
   userId: ObjectId (ref: User, nullable),
-  sessionId: String (for guest carts),
+  sessionId: String (nullable, for guest carts),
 
   items: [{
     productId: ObjectId (ref: Product),
     variantId: ObjectId (ref: ProductVariant, nullable),
-    quantity: Number,
-    priceAtAdd: Number (snapshot price when added)
+    quantity: Number (1-99),
+    priceSnapshot: Number (cents, at time of add)
   }],
 
-  couponCode: String,
-
-  expiresAt: Date (for abandoned cart cleanup),
+  subtotal: Number (calculated on save),
+  itemCount: Number (calculated on save),
 
   createdAt: Date,
   updatedAt: Date
 }
 ```
 
-### 8. Order
+### 7. Order
 
 ```javascript
 Order {
   _id: ObjectId,
-  orderNumber: String (unique, e.g., "LS-A1B2C3"),
+  orderNumber: String (unique, auto: "LSYYMM-XXXXX"),
 
-  // Customer
-  userId: ObjectId (ref: User, nullable for guest),
+  userId: ObjectId (ref: User, nullable),
   guestEmail: String,
-  guestTrackingCode: String (for guest order lookup),
+  trackingCode: String (unique, sparse; auto for guest orders),
 
-  // Vendor (for multi-vendor ready)
-  vendorId: ObjectId (ref: User),
-
-  // Status
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded',
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded',
-
-  // Items
   items: [{
     productId: ObjectId,
     variantId: ObjectId,
-    name: String (snapshot),
-    sku: String (snapshot),
+    name: String,
+    slug: String,
+    sku: String,
+    image: String,
+    price: Number (cents),
     quantity: Number,
-    unitPrice: Number,
-    totalPrice: Number,
-    productType: 'physical' | 'digital'
+    variantInfo: Mixed,
+    lineTotal: Number
   }],
 
-  // Addresses (embedded snapshots)
-  shippingAddress: { ...Address fields },
-  billingAddress: { ...Address fields },
+  shippingAddress: { firstName, lastName, company, address1, address2, city, state, zipCode, country, phone },
+  billingAddress: (same shape),
+  billingSameAsShipping: Boolean,
 
-  // Pricing
   subtotal: Number,
   shippingCost: Number,
   taxAmount: Number,
-  discountAmount: Number,
+  discount: Number,
+  discountDetails: { code, type: 'percentage'|'fixed', value },
   total: Number,
-  currency: 'USD' | 'EUR',
 
-  // Shipping
-  shippingZoneId: ObjectId (ref: ShippingZone),
-  shippingMethod: String,
-  trackingNumber: String,
-  estimatedDelivery: Date,
+  shippingMethod: 'standard' | 'express' | 'overnight' | 'pickup',
+  shippingMethodLabel: String,
 
-  // Coupon
-  couponCode: String,
-  couponDiscount: Number,
+  status: 'pending_payment' | 'processing' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'refunded',
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded',
+  paymentMethod: 'stripe' | 'paypal' | 'cod' | 'bank_transfer',
+  paymentIntentId: String (Stripe),
+  paidAt: Date,
 
-  // Notes
   customerNote: String,
   adminNote: String,
 
-  // Timestamps
-  paidAt: Date,
+  confirmedAt: Date,
   shippedAt: Date,
   deliveredAt: Date,
   cancelledAt: Date,
@@ -345,52 +296,30 @@ Order {
 }
 ```
 
-### 9. Payment
+Order payment is stored on **Order** (paymentIntentId, paidAt, paymentStatus, paymentMethod). A separate **Payment** model exists for CRM/Invoicing (client + invoice); see Other models.
 
-```javascript
-Payment {
-  _id: ObjectId,
-  orderId: ObjectId (ref: Order),
-
-  gateway: 'stripe' | 'zarinpal',
-
-  // Gateway-specific
-  stripePaymentIntentId: String,
-  stripeChargeId: String,
-
-  amount: Number,
-  currency: String,
-  status: 'pending' | 'succeeded' | 'failed' | 'refunded',
-
-  refundedAmount: Number,
-  refundReason: String,
-
-  metadata: Object (gateway response),
-
-  createdAt: Date,
-  updatedAt: Date
-}
-```
-
-### 10. DigitalDelivery
+### 8. DigitalDelivery
 
 ```javascript
 DigitalDelivery {
   _id: ObjectId,
   orderId: ObjectId (ref: Order),
-  orderItemIndex: Number,
+  userId: ObjectId (ref: User),
+  productId: ObjectId (ref: Product),
+  variantId: ObjectId (ref: ProductVariant, nullable),
 
-  // Download tracking
-  downloadToken: String (unique, secure),
-  downloadUrl: String,
+  downloadToken: String (unique),
   downloadCount: Number,
-  maxDownloads: Number,
-  expiresAt: Date,
+  maxDownloads: Number (null = unlimited),
+  expiresAt: Date (null = never),
 
-  // For license keys
-  licenseKey: String,
+  status: 'active' | 'revoked' | 'expired',
 
-  createdAt: Date
+  fileName: String,
+  fileUrl: String,
+
+  createdAt: Date,
+  updatedAt: Date
 }
 ```
 
@@ -398,36 +327,36 @@ DigitalDelivery {
 
 ## Shipping & Tax
 
-### 11. ShippingZone
+### 9. ShippingZone
 
 ```javascript
 ShippingZone {
   _id: ObjectId,
 
   name: String,
-  countries: [String] (ISO codes),
+  countries: [String] (ISO alpha-2),
+  states: [String] (optional, within countries),
 
-  // Flat rate (Phase 1)
-  flatRate: Number,
-  freeShippingThreshold: Number,
-
-  // Future: weight-based rates
-  weightRates: [{
-    minWeight: Number,
-    maxWeight: Number,
-    rate: Number
+  methods: [{
+    methodId: 'standard' | 'express' | 'overnight' | 'pickup',
+    label: String,
+    description: String,
+    price: Number (cents),
+    freeThreshold: Number (null = never free),
+    estimatedDays: String,
+    isActive: Boolean
   }],
 
-  estimatedDays: { min: Number, max: Number },
-
+  isDefault: Boolean (fallback zone),
   isActive: Boolean,
+  sortOrder: Number,
 
   createdAt: Date,
   updatedAt: Date
 }
 ```
 
-### 12. TaxRate (Future)
+### 10. TaxRate (Future)
 
 ```javascript
 TaxRate {
@@ -450,7 +379,7 @@ TaxRate {
 
 ## Promotions
 
-### 13. Coupon
+### 11. Coupon
 
 ```javascript
 Coupon {
@@ -459,25 +388,20 @@ Coupon {
   code: String (unique, uppercase),
   description: String,
 
-  type: 'percentage' | 'fixed' | 'free_shipping',
-  value: Number,
+  discountType: 'percentage' | 'fixed',
+  discountValue: Number,
+  minPurchase: Number (cents),
+  maxDiscount: Number (cents, null),
+  usageLimit: Number (null = unlimited),
+  usageCount: Number,
+  userLimit: Number (per-user uses),
 
-  // Limits
-  minOrderAmount: Number,
-  maxDiscountAmount: Number,
-  usageLimit: Number,
-  usageLimitPerUser: Number,
-  usedCount: Number,
-
-  // Validity
   startDate: Date,
-  endDate: Date,
+  endDate: Date (null = no end),
   isActive: Boolean,
 
-  // Restrictions
   applicableProducts: [ObjectId],
   applicableCategories: [ObjectId],
-  excludedProducts: [ObjectId],
 
   createdAt: Date,
   updatedAt: Date
@@ -488,7 +412,7 @@ Coupon {
 
 ## Reviews & Wishlist
 
-### 14. Review
+### 12. Review
 
 ```javascript
 Review {
@@ -496,36 +420,30 @@ Review {
 
   productId: ObjectId (ref: Product),
   userId: ObjectId (ref: User),
-  orderId: ObjectId (ref: Order, verify purchase),
+  userName: String,
+  orderId: ObjectId (ref: Order, nullable),
 
   rating: Number (1-5),
-  title: String,
-  content: String,
+  comment: String,
 
   isVerifiedPurchase: Boolean,
   status: 'pending' | 'approved' | 'rejected',
-
-  helpfulCount: Number,
-
-  adminReply: String,
-  adminReplyAt: Date,
 
   createdAt: Date,
   updatedAt: Date
 }
 ```
+(Unique index: productId + userId.)
 
-### 15. Wishlist
+### 13. Wishlist
 
 ```javascript
 Wishlist {
   _id: ObjectId,
-  userId: ObjectId (ref: User),
+  userId: ObjectId (ref: User, nullable),
+  sessionId: String (nullable, for guests),
 
-  items: [{
-    productId: ObjectId (ref: Product),
-    addedAt: Date
-  }],
+  products: [ObjectId] (ref: Product),
 
   createdAt: Date,
   updatedAt: Date
@@ -537,20 +455,44 @@ Wishlist {
 ## Indexes Strategy
 
 ```javascript
-// Performance indexes to add
+// As implemented in models
 Product: { slug: 1 }, { categoryId: 1, status: 1 }, { vendorId: 1 }
 ProductVariant: { productId: 1 }, { sku: 1 }
-Order: { userId: 1 }, { guestTrackingCode: 1 }, { orderNumber: 1 }, { status: 1, createdAt: -1 }
-Category: { slug: 1 }, { parentId: 1 }
-Cart: { userId: 1 }, { sessionId: 1 }, { expiresAt: 1 } (TTL index)
-Review: { productId: 1, status: 1 }
+Order: { orderNumber: 1 }, { userId: 1 }, { trackingCode: 1 }, { status: 1 }
+Category: { slug: 1 }, { parentId: 1 }, { isActive: 1 }
+Cart: { userId: 1 }, { sessionId: 1 } (each unique, sparse)
+Wishlist: { userId: 1 }, { sessionId: 1 } (each unique, sparse)
+Review: { productId: 1, userId: 1 } (unique), { productId: 1 }, { userId: 1 }, { status: 1 }
+DigitalDelivery: { orderId: 1 }, { downloadToken: 1 }
+ShippingZone: { countries: 1, states: 1, isActive: 1 }, { isDefault: 1 }
 ```
+
+---
+
+## Other models (in codebase)
+
+These exist in `src/models/` and are used by the admin/CRM/blog features:
+
+| Model | Purpose |
+| ----- | ------- |
+| **Payment** | Manual payment records (userId/customer + optional invoice, method, amount, status); not order checkout. |
+| **Invoice** | Invoices linked to Order and/or User (customer); status, items, totals. |
+| **Expense** | Accounting expenses. |
+| **Notification** | In-app / push notifications (e.g. FCM). |
+| **BlogPost** | Blog posts with SEO fields, rich content. |
+| **BlogCategory** | Blog categories. |
+| **Comment** | Blog comments. |
+| **Media** | Media library entries. |
+| **Ticket** | Support tickets (with comments). |
+| **Promotion** | Promotions (model exists). |
+| **AIAssistant** | AI assistant state/sessions. |
 
 ---
 
 ## Notes
 
-1. **All prices stored in cents** (e.g., $19.99 = 1999)
-2. **Soft delete** where needed via `deletedAt` field
-3. **Timestamps** via Mongoose `timestamps: true`
-4. **vendorId** included from start for multi-vendor readiness
+1. **All prices stored in cents** (e.g., $19.99 = 1999).
+2. **Soft delete**: `Product` uses `deletedAt`.
+3. **Timestamps**: Mongoose `timestamps: true` on all models.
+4. **vendorId** on Product is optional and multi-vendor ready.
+5. **Order numbers** are auto-generated as `LSYYMM-XXXXX`; **tracking codes** for guests are 12-char alphanumeric.

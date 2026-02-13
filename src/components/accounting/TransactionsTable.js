@@ -73,7 +73,7 @@ const TransactionsTable = ({ transactions, type = "user" }) => {
                                         fontWeight: "600",
                                     }}
                                 >
-                                    Client
+                                    Customer
                                 </th>
                             )}
                             <th
@@ -132,7 +132,7 @@ const TransactionsTable = ({ transactions, type = "user" }) => {
                         {transactions?.map((tx) => {
                             const txId = tx._id || tx.id;
                             const invoiceNo = tx.invoiceNumber || tx.id;
-                            const clientName = tx.client?.name || tx.clientName || "Unknown";
+                            const customerName = tx.user?.name || tx.user?.email || tx.client?.name || tx.clientName || "—";
                             const dateStr = tx.issueDate
                                 ? new Date(tx.issueDate).toLocaleDateString()
                                 : tx.date
@@ -169,7 +169,7 @@ const TransactionsTable = ({ transactions, type = "user" }) => {
                                     </td>
                                     {type === "admin" && (
                                         <td style={{ padding: "15px 20px", fontWeight: "500" }}>
-                                            {clientName}
+                                            {customerName}
                                         </td>
                                     )}
                                     <td

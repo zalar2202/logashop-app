@@ -1,8 +1,9 @@
 # Implementation Roadmap
 
-Phased implementation plan for LogaShop e-commerce platform.
+Detailed phase-by-phase task breakdown for LogaShop. For an overview of what’s done and what’s next, see the **[Developer Guide (README)](README.md)** in this folder.
 
 ---
+
 
 ## Phase 0: Foundation (Week 1) ✅
 
@@ -10,7 +11,7 @@ Phased implementation plan for LogaShop e-commerce platform.
 
 ### Tasks
 
-- [x] Copy and adapt core libs from logatech-en
+- [x] Set up core libs (mongodb, auth, jwt, cookies, axios, storage)
     - [x] `lib/mongodb.js`, `lib/auth.js`, `lib/jwt.js`, `lib/cookies.js`
     - [x] `lib/axios.js`, `lib/storage/*`
 - [x] Copy UI components (`components/common/*`)
@@ -200,7 +201,7 @@ Phased implementation plan for LogaShop e-commerce platform.
 
 ### Features
 
-- [x] Copy FCM notification system from logatech-en
+- [x] Integrate FCM notification system
 - [x] Order confirmation email
 - [x] Order shipped email
 - [x] Password reset email
@@ -323,10 +324,7 @@ Phased implementation plan for LogaShop e-commerce platform.
 - [x] BlogCategory model
 - [x] Admin blog management (`/panel/blog`)
 
-### CRM / Clients
-
-- [x] Client model
-- [x] Clients management (`/panel/clients`)
+### (Removed: CRM / Clients — app is product-shop only; clients and packages were removed.)
 
 ### Invoicing
 
@@ -357,7 +355,7 @@ Phased implementation plan for LogaShop e-commerce platform.
 ### Other
 
 - [x] Marketing page (`/panel/marketing`)
-- [x] Services & Packages models (`Service.js`, `Package.js`)
+- (Removed: Services & Packages — product-shop only.)
 - [x] Settings page (`/panel/settings`)
 - [x] Admin user management (`/panel/users`)
 - [x] Redux store setup (`@reduxjs/toolkit`)
@@ -432,7 +430,7 @@ Required before Phase 3 (Stripe):
 - Stripe API keys obtained
 
 Required before Phase 5:
-✓ Firebase project (from logatech-en or new)
+✓ Firebase project configured
 ✓ SMTP email service configured
 ```
 
@@ -456,7 +454,7 @@ Required before Phase 5:
 
 ### Recent Progress (Migration & Polish)
 
-- ✅ Migrated Accounting components (`AccountingStats`, `ExpensesTable`, `TransactionsTable`) from logatech-en.
+- ✅ Accounting components in place (`AccountingStats`, `ExpensesTable`, `TransactionsTable`).
 - ✅ Implemented CSV export functionality for Orders, Invoices, and Expenses.
 - ✅ Fixed runtime error in Category pages (Client Component vs Server Component `onChange` issue).
 - ✅ Enhanced mobile responsiveness for Admin Accounting dashboard and Hero Section.

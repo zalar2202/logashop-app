@@ -64,7 +64,6 @@ const TicketSchema = new mongoose.Schema(
         // People
         createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        client: { type: mongoose.Schema.Types.ObjectId, ref: "Client" },
 
         // Thread
         messages: [TicketMessageSchema],

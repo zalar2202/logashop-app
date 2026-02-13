@@ -39,7 +39,7 @@ export function SEOPreview({
     noIndex = false,
     noFollow = false,
     onFieldChange,
-    baseUrl = "https://logatech.net",
+    baseUrl = "https://shop.logatech.net",
 }) {
     const [isExpanded, setIsExpanded] = useState(true);
     const [activeTab, setActiveTab] = useState("google"); // google, social
@@ -253,7 +253,7 @@ export function SEOPreview({
                                 )}
                                 <div className="p-3">
                                     <p className="text-xs text-[var(--color-text-secondary)] uppercase">
-                                        logatech.net
+                                        shop.logatech.net
                                     </p>
                                     <h3 className="font-semibold text-[var(--color-text-primary)] line-clamp-1">
                                         {displayTitle}

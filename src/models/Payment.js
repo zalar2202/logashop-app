@@ -2,9 +2,9 @@ import mongoose from 'mongoose';
 
 const PaymentSchema = new mongoose.Schema(
     {
-        client: { 
+        userId: { 
             type: mongoose.Schema.Types.ObjectId, 
-            ref: 'Client', 
+            ref: 'User', 
             required: true 
         },
         invoice: { 
@@ -49,6 +49,6 @@ const PaymentSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-PaymentSchema.index({ client: 1, paymentDate: -1 });
+PaymentSchema.index({ userId: 1, paymentDate: -1 });
 
 export default mongoose.models.Payment || mongoose.model('Payment', PaymentSchema);

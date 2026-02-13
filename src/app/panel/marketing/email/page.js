@@ -225,7 +225,11 @@ export default function MarketingEmailPage() {
                                                             }`}
                                                         >
                                                             <div
-                                                                className={`mb-2 ${values.templateType === t.id ? "text-purple-600" : "text-gray-400"}`}
+                                                                className={`mb-2 ${
+                                                                    values.templateType === t.id
+                                                                        ? "text-purple-600"
+                                                                        : "text-gray-400"
+                                                                }`}
                                                             >
                                                                 {t.icon}
                                                             </div>
@@ -350,13 +354,13 @@ function PreviewCard({ values }) {
                             <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center overflow-hidden">
                                 <Image
                                     src="/assets/logo/LogaTech-512.webp"
-                                    alt="LogaTech"
+                                    alt="LogaShop"
                                     width={24}
                                     height={24}
                                     className="w-6 h-6 object-contain brightness-0 invert"
                                 />
                             </div>
-                            LogaTech
+                            LogaShop
                         </div>
 
                         <div className="h-px bg-gray-100 my-4"></div>
@@ -392,7 +396,7 @@ function PreviewCard({ values }) {
 
                     {/* Footer */}
                     <div className="bg-gray-50 p-4 text-center text-xs text-gray-400 border-t">
-                        <p>© 2026 LogaTech Inc.</p>
+                        <p>© 2026 LogaShop Inc.</p>
                         <p className="mt-1">123 Tech Avenue, Silicon Valley</p>
                         <div className="mt-2 flex justify-center gap-2 text-indigo-500">
                             <span>Unsubscribe</span> • <span>View in Browser</span>

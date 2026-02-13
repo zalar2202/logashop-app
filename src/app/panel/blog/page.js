@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import axios from "axios";
@@ -19,19 +19,9 @@ import { Modal } from "@/components/common/Modal";
 import { Skeleton } from "@/components/common/Skeleton";
 import { Pagination } from "@/components/common/Pagination";
 import { ContentWrapper } from "@/components/layout/ContentWrapper";
-import {
-    FileText,
-    Plus,
-    Search,
-    Eye,
-    Calendar,
-    Tag,
-    Star,
-    Pin,
-    Clock,
-} from "lucide-react";
+import { FileText, Plus, Search, Eye, Calendar, Tag, Star, Pin, Clock } from "lucide-react";
 
-export default function BlogPostsPage() {
+function BlogPostsPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -55,18 +45,18 @@ export default function BlogPostsPage() {
     const fetchPosts = useCallback(async () => {
         setLoading(true);
         setError(null);
-        
+
         try {
             const params = new URLSearchParams();
             params.set("page", pagination.page.toString());
             params.set("limit", pagination.limit.toString());
             params.set("admin", "true");
-            
+
             if (searchTerm) params.set("search", searchTerm);
             if (statusFilter !== "all") params.set("status", statusFilter);
 
             const { data } = await axios.get(`/api/blog/posts?${params.toString()}`);
-            
+
             if (data.success) {
                 setPosts(data.data);
                 setPagination(data.pagination);
@@ -326,14 +316,18 @@ export default function BlogPostsPage() {
                                                 <div className="min-w-0 flex-1">
                                                     <div
                                                         className="font-medium truncate max-w-[250px]"
-                                                        style={{ color: "var(--color-text-primary)" }}
+                                                        style={{
+                                                            color: "var(--color-text-primary)",
+                                                        }}
                                                         title={post.title}
                                                     >
                                                         {post.title}
                                                     </div>
                                                     <div
                                                         className="text-xs mt-0.5 flex items-center gap-2"
-                                                        style={{ color: "var(--color-text-secondary)" }}
+                                                        style={{
+                                                            color: "var(--color-text-secondary)",
+                                                        }}
                                                     >
                                                         <span className="truncate max-w-[180px]">
                                                             /{post.slug}
@@ -345,7 +339,10 @@ export default function BlogPostsPage() {
                                                             />
                                                         )}
                                                         {post.isPinned && (
-                                                            <Pin size={12} className="text-blue-500" />
+                                                            <Pin
+                                                                size={12}
+                                                                className="text-blue-500"
+                                                            />
                                                         )}
                                                     </div>
                                                 </div>
@@ -368,7 +365,9 @@ export default function BlogPostsPage() {
                                                     {post.category.name}
                                                 </span>
                                             ) : (
-                                                <span style={{ color: "var(--color-text-secondary)" }}>
+                                                <span
+                                                    style={{ color: "var(--color-text-secondary)" }}
+                                                >
                                                     —
                                                 </span>
                                             )}
@@ -410,7 +409,9 @@ export default function BlogPostsPage() {
                                         </TableCell>
                                         <TableCell align="right">
                                             <TableActions
-                                                onView={() => window.open(`/blog/${post.slug}`, "_blank")}
+                                                onView={() =>
+                                                    window.open(`/blog/${post.slug}`, "_blank")
+                                                }
                                                 onEdit={() =>
                                                     router.push(`/panel/blog/${post._id}/edit`)
                                                 }
@@ -462,5 +463,19 @@ export default function BlogPostsPage() {
                 </div>
             </Modal>
         </ContentWrapper>
+    );
+}
+
+export default function BlogPostsPage() {
+    return (
+        <Suspense
+            fallback={
+                <ContentWrapper>
+                    <Skeleton className="h-64" />
+                </ContentWrapper>
+            }
+        >
+            <BlogPostsPageContent />
+        </Suspense>
     );
 }

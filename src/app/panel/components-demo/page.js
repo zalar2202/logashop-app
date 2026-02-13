@@ -91,9 +91,6 @@ export default function ComponentsDemoPage() {
                     >
                         Components Library
                     </h1>
-                    <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
-                        Complete showcase of all reusable components in the LogaTech Admin Panel
-                    </p>
                 </div>
 
                 {/* Phase 3.1: Loading & Feedback Components */}

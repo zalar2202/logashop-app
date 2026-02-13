@@ -15,9 +15,9 @@ This document captures the agreed-upon scope and key decisions for LogaShop.
 
 Even though we start single-store, we will:
 
-- Include `vendorId` in Product, Order, and relevant models
-- Design APIs to filter by vendor
-- Create a `Vendor` model (can be used later or remain with a single "store owner")
+-   Include `vendorId` in Product, Order, and relevant models
+-   Design APIs to filter by vendor
+-   Create a `Vendor` model (can be used later or remain with a single "store owner")
 
 ---
 
@@ -30,9 +30,9 @@ Even though we start single-store, we will:
 
 ### Digital Product Features
 
-- Secure download links (time-limited, authenticated)
-- Download count limits (e.g., max 3 downloads)
-- Optional: License key generation
+-   Secure download links (time-limited, authenticated)
+-   Download count limits (e.g., max 3 downloads)
+-   Optional: License key generation
 
 ### Product Type Field
 
@@ -94,9 +94,9 @@ ShippingZone {
 
 ### Currency Handling
 
-- Store prices in cents (integer) to avoid floating-point issues
-- Display currency based on user preference or geo-location
-- Exchange rates: Static for now, dynamic API later
+-   Store prices in cents (integer) to avoid floating-point issues
+-   Display currency based on user preference or geo-location
+-   Exchange rates: Static for now, dynamic API later
 
 ---
 
@@ -110,9 +110,9 @@ ShippingZone {
 
 ### Guest Order Tracking
 
-- Generate unique tracking code: `LS-XXXXXX` (6 alphanumeric)
-- Guest can check order status at `/track?code=LS-XXXXXX`
-- Optionally convert guest order to account post-purchase
+-   Generate unique tracking code: `LS-XXXXXX` (6 alphanumeric)
+-   Guest can check order status at `/track?code=LS-XXXXXX`
+-   Optionally convert guest order to account post-purchase
 
 ---
 
@@ -120,32 +120,32 @@ ShippingZone {
 
 ### Core (Phase 1)
 
-- [ ] Product management (CRUD, variants, images)
-- [ ] Category hierarchy
-- [ ] Inventory tracking
-- [ ] Shopping cart
-- [ ] Guest & registered checkout
-- [ ] Stripe payments
-- [ ] Order management
-- [ ] Flat-rate regional shipping
-- [ ] Admin dashboard
+-   [ ] Product management (CRUD, variants, images)
+-   [ ] Category hierarchy
+-   [ ] Inventory tracking
+-   [ ] Shopping cart
+-   [ ] Guest & registered checkout
+-   [ ] Stripe payments
+-   [ ] Order management
+-   [ ] Flat-rate regional shipping
+-   [ ] Admin dashboard
 
 ### Extended (Phase 2)
 
-- [ ] Wishlist
-- [ ] Product reviews & ratings
-- [ ] Coupon/promo codes
-- [ ] Email notifications (order confirmation, shipping)
-- [ ] Accounting integration (from logatech-en)
-- [ ] Digital product delivery
+-   [ ] Wishlist
+-   [ ] Product reviews & ratings
+-   [ ] Coupon/promo codes
+-   [ ] Email notifications (order confirmation, shipping)
+-   [ ] Accounting integration
+-   [ ] Digital product delivery
 
 ### Advanced (Phase 3)
 
-- [ ] Multi-vendor support
-- [ ] Weight-based shipping
-- [ ] Real-time carrier rates
-- [ ] Multi-currency with live rates
-- [ ] Analytics & reports
+-   [ ] Multi-vendor support
+-   [ ] Weight-based shipping
+-   [ ] Real-time carrier rates
+-   [ ] Multi-currency with live rates
+-   [ ] Analytics & reports
 
 ---
 

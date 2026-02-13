@@ -54,7 +54,7 @@ export default function StorefrontHeader() {
                         </span>
                     </div>
                     <div className="flex items-center gap-4">
-                        <Link href="/track-order" className="hover:underline">
+                        <Link href="/track" className="hover:underline">
                             Track Order
                         </Link>
                         {!isAuthenticated && (

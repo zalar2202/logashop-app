@@ -27,18 +27,16 @@ const CartItemSchema = new mongoose.Schema({
 
 const CartSchema = new mongoose.Schema(
     {
-        // For logged-in users
+        // For logged-in users (index via schema.index below)
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             default: null,
-            index: true,
         },
-        // For guest users (stored in cookie)
+        // For guest users (index via schema.index below)
         sessionId: {
             type: String,
             default: null,
-            index: true,
         },
         items: [CartItemSchema],
         // Calculated totals (updated on each cart modification)

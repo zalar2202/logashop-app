@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,12 +54,12 @@ const invoiceSchema = Yup.object().shape({
     taxRate: Yup.number().min(0).max(100),
 });
 
-function InvoicesPage() {
+function InvoicesPageContent() {
     const { user } = useAuth();
     const searchParams = useSearchParams();
     const invoiceIdParam = searchParams.get("id");
     const isAdmin = ["admin", "manager"].includes(user?.role);
-    
+
     const [invoices, setInvoices] = useState([]);
     const [clients, setClients] = useState([]);
     const [packages, setPackages] = useState([]);
@@ -83,7 +83,7 @@ function InvoicesPage() {
     // Effect to open detail view if ID is in URL
     useEffect(() => {
         if (invoiceIdParam && invoices.length > 0) {
-            const inv = invoices.find(i => i._id === invoiceIdParam || i.id === invoiceIdParam);
+            const inv = invoices.find((i) => i._id === invoiceIdParam || i.id === invoiceIdParam);
             if (inv) {
                 setSelectedInvoice(inv);
                 setIsViewModalOpen(true);
@@ -248,12 +248,24 @@ function InvoicesPage() {
                                 <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)]">
                                     Invoice Details
                                 </th>
-                                <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)]">Client</th>
-                                <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)]">Date</th>
-                                <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)]">Type</th>
-                                <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)] text-right">Amount</th>
-                                <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)] text-center">Status</th>
-                                <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)] text-right">Actions</th>
+                                <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)]">
+                                    Client
+                                </th>
+                                <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)]">
+                                    Date
+                                </th>
+                                <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)]">
+                                    Type
+                                </th>
+                                <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)] text-right">
+                                    Amount
+                                </th>
+                                <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)] text-center">
+                                    Status
+                                </th>
+                                <th className="p-4 font-bold text-xs uppercase tracking-wider text-[var(--color-text-secondary)] text-right">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -280,7 +292,9 @@ function InvoicesPage() {
                                                 <span className="font-mono text-sm font-bold text-indigo-600 dark:text-indigo-400">
                                                     {inv.invoiceNumber}
                                                 </span>
-                                                <span className="text-[10px] text-[var(--color-text-tertiary)] uppercase font-medium">#{inv._id.slice(-6)}</span>
+                                                <span className="text-[10px] text-[var(--color-text-tertiary)] uppercase font-medium">
+                                                    #{inv._id.slice(-6)}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="p-4">
@@ -288,7 +302,9 @@ function InvoicesPage() {
                                                 <span className="font-bold text-[var(--color-text-primary)]">
                                                     {inv.client?.name || "Unknown"}
                                                 </span>
-                                                <span className="text-xs text-[var(--color-text-secondary)]">{inv.client?.email}</span>
+                                                <span className="text-xs text-[var(--color-text-secondary)]">
+                                                    {inv.client?.email}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="p-4 text-sm text-[var(--color-text-secondary)]">
@@ -298,9 +314,17 @@ function InvoicesPage() {
                                             {(() => {
                                                 if (inv.paymentPlan?.isInstallment) {
                                                     // Check if this is a down payment invoice
-                                                    if (inv.paymentPlan.downPayment && inv.paymentPlan.downPayment > 0) {
+                                                    if (
+                                                        inv.paymentPlan.downPayment &&
+                                                        inv.paymentPlan.downPayment > 0
+                                                    ) {
                                                         // If invoice total equals down payment amount, it's a down payment invoice
-                                                        if (Math.abs(inv.total - inv.paymentPlan.downPayment) < 0.01) {
+                                                        if (
+                                                            Math.abs(
+                                                                inv.total -
+                                                                    inv.paymentPlan.downPayment
+                                                            ) < 0.01
+                                                        ) {
                                                             return (
                                                                 <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider">
                                                                     <DollarSign className="w-3 h-3" />
@@ -333,12 +357,19 @@ function InvoicesPage() {
                                             {(() => {
                                                 // Determine specific invoice status
                                                 if (inv.status === "paid") {
-                                                    return <Badge variant="success" size="sm">PAID IN FULL</Badge>;
+                                                    return (
+                                                        <Badge variant="success" size="sm">
+                                                            PAID IN FULL
+                                                        </Badge>
+                                                    );
                                                 }
-                                                
+
                                                 if (inv.paymentPlan?.isInstallment) {
                                                     // Installment invoice
-                                                    if (inv.paymentPlan.downPayment && inv.paymentPlan.downPayment > 0) {
+                                                    if (
+                                                        inv.paymentPlan.downPayment &&
+                                                        inv.paymentPlan.downPayment > 0
+                                                    ) {
                                                         // Has down payment
                                                         if (inv.status === "pending") {
                                                             return (
@@ -374,24 +405,43 @@ function InvoicesPage() {
                                                         }
                                                     }
                                                 }
-                                                
+
                                                 // Standard statuses
                                                 if (inv.status === "overdue") {
-                                                    return <Badge variant="danger" size="sm">OVERDUE</Badge>;
+                                                    return (
+                                                        <Badge variant="danger" size="sm">
+                                                            OVERDUE
+                                                        </Badge>
+                                                    );
                                                 }
                                                 if (inv.status === "pending") {
-                                                    return <Badge variant="primary" size="sm">PENDING PAYMENT</Badge>;
+                                                    return (
+                                                        <Badge variant="primary" size="sm">
+                                                            PENDING PAYMENT
+                                                        </Badge>
+                                                    );
                                                 }
                                                 if (inv.status === "partial") {
-                                                    return <Badge variant="warning" size="sm">PARTIALLY PAID</Badge>;
+                                                    return (
+                                                        <Badge variant="warning" size="sm">
+                                                            PARTIALLY PAID
+                                                        </Badge>
+                                                    );
                                                 }
-                                                
-                                                return <Badge variant="secondary" size="sm">{inv.status.toUpperCase()}</Badge>;
+
+                                                return (
+                                                    <Badge variant="secondary" size="sm">
+                                                        {inv.status.toUpperCase()}
+                                                    </Badge>
+                                                );
                                             })()}
-                                            {inv.paymentMethod && inv.status !== 'paid' && (
+                                            {inv.paymentMethod && inv.status !== "paid" && (
                                                 <div className="mt-1">
                                                     <span className="text-[9px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
-                                                        METHOD: {inv.paymentMethod.replace('_', ' ').toUpperCase()}
+                                                        METHOD:{" "}
+                                                        {inv.paymentMethod
+                                                            .replace("_", " ")
+                                                            .toUpperCase()}
                                                     </span>
                                                 </div>
                                             )}
@@ -432,7 +482,9 @@ function InvoicesPage() {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        {["sent", "overdue"].includes(inv.status) && (
+                                                        {["sent", "overdue"].includes(
+                                                            inv.status
+                                                        ) && (
                                                             <Button
                                                                 size="sm"
                                                                 variant="success"
@@ -519,7 +571,10 @@ function InvoicesPage() {
                                             </option>
                                         ))}
                                     </SelectField>
-                                    <SelectField name="package" label="Linked Package (Auto-Activation)">
+                                    <SelectField
+                                        name="package"
+                                        label="Linked Package (Auto-Activation)"
+                                    >
                                         <option value="">-- None --</option>
                                         {packages.map((p) => (
                                             <option key={p._id} value={p._id}>
@@ -638,57 +693,64 @@ function InvoicesPage() {
                                     </div>
                                 </div>
 
-                                 <div className="bg-[var(--color-background-secondary)] p-6 rounded-xl border border-[var(--color-border)] space-y-4">
-                                     <div className="flex items-center justify-between">
-                                         <h4 className="text-sm font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-                                             <CreditCard className="w-4 h-4 text-indigo-600" />
-                                             Payment & Installment Options
-                                         </h4>
-                                         <label className="flex items-center gap-2 cursor-pointer">
-                                             <input
-                                                 type="checkbox"
-                                                 className="rounded text-indigo-600"
-                                                 name="paymentPlan.isInstallment"
-                                                 checked={values.paymentPlan.isInstallment}
-                                                 onChange={(e) => setFieldValue("paymentPlan.isInstallment", e.target.checked)}
-                                             />
-                                             <span className="text-xs font-semibold text-[var(--color-text-secondary)]">Enable Installments</span>
-                                         </label>
-                                     </div>
+                                <div className="bg-[var(--color-background-secondary)] p-6 rounded-xl border border-[var(--color-border)] space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-sm font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+                                            <CreditCard className="w-4 h-4 text-indigo-600" />
+                                            Payment & Installment Options
+                                        </h4>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded text-indigo-600"
+                                                name="paymentPlan.isInstallment"
+                                                checked={values.paymentPlan.isInstallment}
+                                                onChange={(e) =>
+                                                    setFieldValue(
+                                                        "paymentPlan.isInstallment",
+                                                        e.target.checked
+                                                    )
+                                                }
+                                            />
+                                            <span className="text-xs font-semibold text-[var(--color-text-secondary)]">
+                                                Enable Installments
+                                            </span>
+                                        </label>
+                                    </div>
 
-                                     {values.paymentPlan.isInstallment && (
-                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                             <InputField
-                                                 type="number"
-                                                 name="paymentPlan.downPayment"
-                                                 label="Down Payment"
-                                                 prefix="$"
-                                             />
-                                             <InputField
-                                                 type="number"
-                                                 name="paymentPlan.installmentAmount"
-                                                 label="Installment Amt"
-                                                 prefix="$"
-                                             />
-                                             <InputField
-                                                 type="number"
-                                                 name="paymentPlan.installmentsCount"
-                                                 label="Total Payments"
-                                             />
-                                             <SelectField name="paymentPlan.period" label="Period">
-                                                 <option value="monthly">Monthly</option>
-                                                 <option value="weekly">Weekly</option>
-                                                 <option value="quarterly">Quarterly</option>
-                                             </SelectField>
-                                         </div>
-                                     )}
-                                 </div>
+                                    {values.paymentPlan.isInstallment && (
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <InputField
+                                                type="number"
+                                                name="paymentPlan.downPayment"
+                                                label="Down Payment"
+                                                prefix="$"
+                                            />
+                                            <InputField
+                                                type="number"
+                                                name="paymentPlan.installmentAmount"
+                                                label="Installment Amt"
+                                                prefix="$"
+                                            />
+                                            <InputField
+                                                type="number"
+                                                name="paymentPlan.installmentsCount"
+                                                label="Total Payments"
+                                            />
+                                            <SelectField name="paymentPlan.period" label="Period">
+                                                <option value="monthly">Monthly</option>
+                                                <option value="weekly">Weekly</option>
+                                                <option value="quarterly">Quarterly</option>
+                                            </SelectField>
+                                        </div>
+                                    )}
+                                </div>
 
-                                 <TextareaField
-                                     name="notes"
-                                     label="Notes / Payment Instructions"
-                                     rows={2}
-                                 />
+                                <TextareaField
+                                    name="notes"
+                                    label="Notes / Payment Instructions"
+                                    rows={2}
+                                />
 
                                 <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
                                     <Button
@@ -719,51 +781,69 @@ function InvoicesPage() {
                     <div className="space-y-6 py-2">
                         <div className="grid grid-cols-2 gap-8 border-b pb-6 dark:border-gray-700">
                             <div>
-                                <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Bill To</p>
-                                <p className="font-bold text-lg text-[var(--color-text-primary)]">{selectedInvoice.client?.name || 'Unknown Client'}</p>
-                                <p className="text-sm text-[var(--color-text-secondary)]">{selectedInvoice.client?.email}</p>
+                                <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">
+                                    Bill To
+                                </p>
+                                <p className="font-bold text-lg text-[var(--color-text-primary)]">
+                                    {selectedInvoice.client?.name || "Unknown Client"}
+                                </p>
+                                <p className="text-sm text-[var(--color-text-secondary)]">
+                                    {selectedInvoice.client?.email}
+                                </p>
                             </div>
                             <div className="text-right">
-                                <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Invoice Status</p>
+                                <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">
+                                    Invoice Status
+                                </p>
                                 <Badge
                                     variant={
                                         selectedInvoice.status === "paid"
                                             ? "success"
                                             : selectedInvoice.status === "overdue"
-                                                ? "danger"
-                                                : "primary"
+                                            ? "danger"
+                                            : "primary"
                                     }
                                 >
                                     {selectedInvoice.status.toUpperCase()}
                                 </Badge>
-                                {selectedInvoice.paymentMethod && selectedInvoice.status !== 'paid' && (
-                                    <div className="mt-3">
-                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                                            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-                                                CLIENT CHOSE: {selectedInvoice.paymentMethod.replace('_', ' ').toUpperCase()}
-                                            </span>
+                                {selectedInvoice.paymentMethod &&
+                                    selectedInvoice.status !== "paid" && (
+                                        <div className="mt-3">
+                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                                                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                                <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                                                    CLIENT CHOSE:{" "}
+                                                    {selectedInvoice.paymentMethod
+                                                        .replace("_", " ")
+                                                        .toUpperCase()}
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] text-amber-500 mt-1 italic">
+                                                Payments instructions will be sant to you by admin.
+                                            </p>
                                         </div>
-                                        <p className="text-[10px] text-amber-500 mt-1 italic">
-                                            Payments instructions will be sant to you by admin.
-                                        </p>
-                                    </div>
-                                )}
+                                    )}
                             </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-6 text-sm">
                             <div>
                                 <p className="text-gray-400 mb-1">Invoice Number</p>
-                                <p className="font-mono font-bold text-[var(--color-text-primary)]">{selectedInvoice.invoiceNumber}</p>
+                                <p className="font-mono font-bold text-[var(--color-text-primary)]">
+                                    {selectedInvoice.invoiceNumber}
+                                </p>
                             </div>
                             <div>
                                 <p className="text-gray-400 mb-1">Issue Date</p>
-                                <p className="font-medium text-[var(--color-text-primary)]">{new Date(selectedInvoice.issueDate).toLocaleString()}</p>
+                                <p className="font-medium text-[var(--color-text-primary)]">
+                                    {new Date(selectedInvoice.issueDate).toLocaleString()}
+                                </p>
                             </div>
                             <div>
                                 <p className="text-gray-400 mb-1">Due Date</p>
-                                <p className="font-medium text-[var(--color-text-primary)]">{new Date(selectedInvoice.dueDate).toLocaleString()}</p>
+                                <p className="font-medium text-[var(--color-text-primary)]">
+                                    {new Date(selectedInvoice.dueDate).toLocaleString()}
+                                </p>
                             </div>
                         </div>
 
@@ -771,19 +851,35 @@ function InvoicesPage() {
                             <table className="w-full text-left">
                                 <thead className="bg-[var(--color-background-secondary)]">
                                     <tr>
-                                        <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-500">Service Description</th>
-                                        <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 text-center">Qty</th>
-                                        <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 text-right">Unit Price</th>
-                                        <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 text-right">Total</th>
+                                        <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-500">
+                                            Service Description
+                                        </th>
+                                        <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 text-center">
+                                            Qty
+                                        </th>
+                                        <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 text-right">
+                                            Unit Price
+                                        </th>
+                                        <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 text-right">
+                                            Total
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y dark:divide-gray-700">
                                     {selectedInvoice.items.map((item, idx) => (
                                         <tr key={idx}>
-                                            <td className="px-4 py-4 text-sm text-[var(--color-text-primary)] font-medium">{item.description}</td>
-                                            <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] text-center">{item.quantity}</td>
-                                            <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] text-right">${item.unitPrice?.toFixed(2)}</td>
-                                            <td className="px-4 py-4 text-sm text-[var(--color-text-primary)] font-bold text-right">${(item.quantity * item.unitPrice).toFixed(2)}</td>
+                                            <td className="px-4 py-4 text-sm text-[var(--color-text-primary)] font-medium">
+                                                {item.description}
+                                            </td>
+                                            <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] text-center">
+                                                {item.quantity}
+                                            </td>
+                                            <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] text-right">
+                                                ${item.unitPrice?.toFixed(2)}
+                                            </td>
+                                            <td className="px-4 py-4 text-sm text-[var(--color-text-primary)] font-bold text-right">
+                                                ${(item.quantity * item.unitPrice).toFixed(2)}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -794,15 +890,30 @@ function InvoicesPage() {
                             <div className="w-64 space-y-3">
                                 <div className="flex justify-between text-sm text-[var(--color-text-secondary)]">
                                     <span>Subtotal</span>
-                                    <span>${selectedInvoice.subtotal?.toFixed(2) || (selectedInvoice.total / (1 + (selectedInvoice.taxRate || 0)/100)).toFixed(2)}</span>
+                                    <span>
+                                        $
+                                        {selectedInvoice.subtotal?.toFixed(2) ||
+                                            (
+                                                selectedInvoice.total /
+                                                (1 + (selectedInvoice.taxRate || 0) / 100)
+                                            ).toFixed(2)}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between text-sm text-[var(--color-text-secondary)]">
                                     <span>Tax ({selectedInvoice.taxRate || 0}%)</span>
-                                    <span>${((selectedInvoice.total || 0) - (selectedInvoice.subtotal || 0)).toFixed(2)}</span>
+                                    <span>
+                                        $
+                                        {(
+                                            (selectedInvoice.total || 0) -
+                                            (selectedInvoice.subtotal || 0)
+                                        ).toFixed(2)}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between text-xl font-bold text-[var(--color-text-primary)] border-t pt-3 dark:border-gray-700">
                                     <span>Total</span>
-                                    <span className="text-indigo-600">${selectedInvoice.total?.toFixed(2)}</span>
+                                    <span className="text-indigo-600">
+                                        ${selectedInvoice.total?.toFixed(2)}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -813,74 +924,101 @@ function InvoicesPage() {
                                     <Clock className="w-3 h-3" />
                                     Payment Breakdown
                                 </h4>
-                                
+
                                 <div className="space-y-3">
                                     {/* Down Payment */}
-                                    <div className={`flex justify-between items-center p-2 rounded-lg ${
-                                        ['partial', 'paid'].includes(selectedInvoice.status) 
-                                        ? 'bg-emerald-100/50 dark:bg-emerald-900/30' 
-                                        : 'bg-amber-100/50 dark:bg-amber-900/30'
-                                    }`}>
-                                        <span className={`text-xs font-bold uppercase tracking-wide ${
-                                            ['partial', 'paid'].includes(selectedInvoice.status)
-                                            ? 'text-emerald-800 dark:text-emerald-200'
-                                            : 'text-amber-800 dark:text-amber-200'
-                                        }`}>
-                                            {['partial', 'paid'].includes(selectedInvoice.status) ? 'Down Payment (Paid)' : 'Down Payment (Due Now)'}
+                                    <div
+                                        className={`flex justify-between items-center p-2 rounded-lg ${
+                                            ["partial", "paid"].includes(selectedInvoice.status)
+                                                ? "bg-emerald-100/50 dark:bg-emerald-900/30"
+                                                : "bg-amber-100/50 dark:bg-amber-900/30"
+                                        }`}
+                                    >
+                                        <span
+                                            className={`text-xs font-bold uppercase tracking-wide ${
+                                                ["partial", "paid"].includes(selectedInvoice.status)
+                                                    ? "text-emerald-800 dark:text-emerald-200"
+                                                    : "text-amber-800 dark:text-amber-200"
+                                            }`}
+                                        >
+                                            {["partial", "paid"].includes(selectedInvoice.status)
+                                                ? "Down Payment (Paid)"
+                                                : "Down Payment (Due Now)"}
                                         </span>
-                                        <span className={`text-lg font-bold ${
-                                            ['partial', 'paid'].includes(selectedInvoice.status)
-                                            ? 'text-emerald-600 dark:text-emerald-400'
-                                            : 'text-amber-600 dark:text-amber-400'
-                                        }`}>
+                                        <span
+                                            className={`text-lg font-bold ${
+                                                ["partial", "paid"].includes(selectedInvoice.status)
+                                                    ? "text-emerald-600 dark:text-emerald-400"
+                                                    : "text-amber-600 dark:text-amber-400"
+                                            }`}
+                                        >
                                             ${selectedInvoice.paymentPlan.downPayment?.toFixed(2)}
                                         </span>
                                     </div>
 
                                     {/* Remaining Balance */}
-                                    <div className={`flex justify-between items-center p-2 rounded-lg ${
-                                        selectedInvoice.status === 'partial' 
-                                        ? 'bg-amber-100/50 dark:bg-amber-900/30' 
-                                        : selectedInvoice.status === 'paid'
-                                            ? 'bg-emerald-100/50 dark:bg-emerald-900/30'
-                                            : ''
-                                    }`}>
-                                        <span className={`text-xs ${
-                                            selectedInvoice.status === 'partial'
-                                            ? 'font-bold text-amber-800 dark:text-amber-200 uppercase tracking-wide'
-                                            : selectedInvoice.status === 'paid'
-                                                ? 'font-bold text-emerald-800 dark:text-emerald-200 uppercase tracking-wide'
-                                                : 'text-indigo-400 dark:text-indigo-500 uppercase font-bold'
-                                        }`}>
-                                            {selectedInvoice.status === 'partial' 
-                                                ? 'Remaining Balance (Due Now)' 
-                                                : selectedInvoice.status === 'paid'
-                                                    ? 'Remaining Balance (Paid)'
-                                                    : 'Remaining Balance (Deferred)'
-                                            }
+                                    <div
+                                        className={`flex justify-between items-center p-2 rounded-lg ${
+                                            selectedInvoice.status === "partial"
+                                                ? "bg-amber-100/50 dark:bg-amber-900/30"
+                                                : selectedInvoice.status === "paid"
+                                                ? "bg-emerald-100/50 dark:bg-emerald-900/30"
+                                                : ""
+                                        }`}
+                                    >
+                                        <span
+                                            className={`text-xs ${
+                                                selectedInvoice.status === "partial"
+                                                    ? "font-bold text-amber-800 dark:text-amber-200 uppercase tracking-wide"
+                                                    : selectedInvoice.status === "paid"
+                                                    ? "font-bold text-emerald-800 dark:text-emerald-200 uppercase tracking-wide"
+                                                    : "text-indigo-400 dark:text-indigo-500 uppercase font-bold"
+                                            }`}
+                                        >
+                                            {selectedInvoice.status === "partial"
+                                                ? "Remaining Balance (Due Now)"
+                                                : selectedInvoice.status === "paid"
+                                                ? "Remaining Balance (Paid)"
+                                                : "Remaining Balance (Deferred)"}
                                         </span>
-                                        <span className={`text-lg font-bold ${
-                                            selectedInvoice.status === 'partial'
-                                            ? 'text-amber-600 dark:text-amber-400'
-                                            : selectedInvoice.status === 'paid'
-                                                ? 'text-emerald-600 dark:text-emerald-400'
-                                                : 'text-indigo-900 dark:text-indigo-100'
-                                        }`}>
-                                            ${(selectedInvoice.total - selectedInvoice.paymentPlan.downPayment).toFixed(2)}
+                                        <span
+                                            className={`text-lg font-bold ${
+                                                selectedInvoice.status === "partial"
+                                                    ? "text-amber-600 dark:text-amber-400"
+                                                    : selectedInvoice.status === "paid"
+                                                    ? "text-emerald-600 dark:text-emerald-400"
+                                                    : "text-indigo-900 dark:text-indigo-100"
+                                            }`}
+                                        >
+                                            $
+                                            {(
+                                                selectedInvoice.total -
+                                                selectedInvoice.paymentPlan.downPayment
+                                            ).toFixed(2)}
                                         </span>
                                     </div>
-                                    
+
                                     {selectedInvoice.paymentPlan.installmentAmount > 0 && (
                                         <div className="grid grid-cols-2 gap-4 pt-2 mt-2 border-t border-indigo-200 dark:border-indigo-800/30">
                                             <div>
-                                                <p className="text-[10px] text-indigo-400 dark:text-indigo-500 uppercase font-bold">Instalments</p>
+                                                <p className="text-[10px] text-indigo-400 dark:text-indigo-500 uppercase font-bold">
+                                                    Instalments
+                                                </p>
                                                 <p className="text-sm font-bold text-indigo-900 dark:text-indigo-100">
-                                                    {selectedInvoice.paymentPlan.installmentsCount} x ${selectedInvoice.paymentPlan.installmentAmount?.toFixed(2)}
+                                                    {selectedInvoice.paymentPlan.installmentsCount}{" "}
+                                                    x $
+                                                    {selectedInvoice.paymentPlan.installmentAmount?.toFixed(
+                                                        2
+                                                    )}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-[10px] text-indigo-400 dark:text-indigo-500 uppercase font-bold">Frequency</p>
-                                                <p className="text-sm font-bold text-indigo-900 dark:text-indigo-100 capitalize">{selectedInvoice.paymentPlan.period}</p>
+                                                <p className="text-[10px] text-indigo-400 dark:text-indigo-500 uppercase font-bold">
+                                                    Frequency
+                                                </p>
+                                                <p className="text-sm font-bold text-indigo-900 dark:text-indigo-100 capitalize">
+                                                    {selectedInvoice.paymentPlan.period}
+                                                </p>
                                             </div>
                                         </div>
                                     )}
@@ -888,20 +1026,36 @@ function InvoicesPage() {
                             </div>
                         )}
 
-                         {selectedInvoice.notes && (
-                             <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-[var(--color-border)]">
-                                 <p className="text-xs uppercase font-bold text-gray-400 mb-2">Notes</p>
-                                 <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed italic whitespace-pre-wrap">{selectedInvoice.notes}</p>
-                             </div>
-                         )}
+                        {selectedInvoice.notes && (
+                            <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-[var(--color-border)]">
+                                <p className="text-xs uppercase font-bold text-gray-400 mb-2">
+                                    Notes
+                                </p>
+                                <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed italic whitespace-pre-wrap">
+                                    {selectedInvoice.notes}
+                                </p>
+                            </div>
+                        )}
 
                         <div className="flex justify-end gap-3 pt-6 border-t dark:border-gray-700">
-                            <Button variant="secondary" onClick={() => setIsViewModalOpen(false)}>Close</Button>
+                            <Button variant="secondary" onClick={() => setIsViewModalOpen(false)}>
+                                Close
+                            </Button>
                             <Link href={`/panel/invoices/${selectedInvoice._id}/print`}>
-                                <Button variant="primary" icon={<Download className="w-4 h-4" />}>Download PDF</Button>
+                                <Button variant="primary" icon={<Download className="w-4 h-4" />}>
+                                    Download PDF
+                                </Button>
                             </Link>
-                            {!isAdmin && ['sent', 'overdue'].includes(selectedInvoice.status) && (
-                                <Button variant="success" onClick={() => { setIsViewModalOpen(false); setIsPaymentModalOpen(true); }}>Proceed to Payment</Button>
+                            {!isAdmin && ["sent", "overdue"].includes(selectedInvoice.status) && (
+                                <Button
+                                    variant="success"
+                                    onClick={() => {
+                                        setIsViewModalOpen(false);
+                                        setIsPaymentModalOpen(true);
+                                    }}
+                                >
+                                    Proceed to Payment
+                                </Button>
                             )}
                         </div>
                     </div>
@@ -916,26 +1070,52 @@ function InvoicesPage() {
             >
                 <div className="space-y-6 p-2">
                     <p className="text-sm text-[var(--color-text-secondary)]">
-                        Please select your preferred payment method for invoice <strong>{selectedInvoice?.invoiceNumber}</strong>. 
-                        After selection, our team will manually provide you with the specific payment instructions.
+                        Please select your preferred payment method for invoice{" "}
+                        <strong>{selectedInvoice?.invoiceNumber}</strong>. After selection, our team
+                        will manually provide you with the specific payment instructions.
                     </p>
-                    
+
                     <div className="grid grid-cols-1 gap-3">
                         {[
-                            { id: 'bank_transfer', name: 'Bank Transfer', desc: 'Direct deposit to our business account', icon: <Building2 className="w-5 h-5" /> },
-                            { id: 'crypto', name: 'Cryptocurrency', desc: 'USDT (TRC20), BTC, or ETH', icon: <Globe className="w-5 h-5" /> },
-                            { id: 'cash', name: 'Cash Payment', desc: 'Visit our office or local agent', icon: <CreditCard className="w-5 h-5" /> },
-                            { id: 'other', name: 'Other Methods', desc: 'Contact support for more options', icon: <Plus className="w-5 h-5" /> }
+                            {
+                                id: "bank_transfer",
+                                name: "Bank Transfer",
+                                desc: "Direct deposit to our business account",
+                                icon: <Building2 className="w-5 h-5" />,
+                            },
+                            {
+                                id: "crypto",
+                                name: "Cryptocurrency",
+                                desc: "USDT (TRC20), BTC, or ETH",
+                                icon: <Globe className="w-5 h-5" />,
+                            },
+                            {
+                                id: "cash",
+                                name: "Cash Payment",
+                                desc: "Visit our office or local agent",
+                                icon: <CreditCard className="w-5 h-5" />,
+                            },
+                            {
+                                id: "other",
+                                name: "Other Methods",
+                                desc: "Contact support for more options",
+                                icon: <Plus className="w-5 h-5" />,
+                            },
                         ].map((method) => (
                             <button
                                 key={method.id}
                                 onClick={async () => {
                                     try {
-                                        const { data } = await axios.patch(`/api/invoices/${selectedInvoice._id}/payment-method`, {
-                                            paymentMethod: method.id
-                                        });
+                                        const { data } = await axios.patch(
+                                            `/api/invoices/${selectedInvoice._id}/payment-method`,
+                                            {
+                                                paymentMethod: method.id,
+                                            }
+                                        );
                                         if (data.success) {
-                                            toast.success(`Chosen ${method.name}. Awaiting instructions.`);
+                                            toast.success(
+                                                `Chosen ${method.name}. Awaiting instructions.`
+                                            );
                                             setIsPaymentModalOpen(false);
                                             fetchInvoices();
                                         }
@@ -949,16 +1129,21 @@ function InvoicesPage() {
                                     {method.icon}
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-[var(--color-text-primary)]">{method.name}</h4>
-                                    <p className="text-xs text-[var(--color-text-secondary)]">{method.desc}</p>
+                                    <h4 className="font-bold text-[var(--color-text-primary)]">
+                                        {method.name}
+                                    </h4>
+                                    <p className="text-xs text-[var(--color-text-secondary)]">
+                                        {method.desc}
+                                    </p>
                                 </div>
                             </button>
                         ))}
                     </div>
-                    
+
                     <div className="pt-4 border-t border-[var(--color-border)]">
                         <p className="text-[10px] text-center text-[var(--color-text-tertiary)] italic">
-                            No automated payments are processed here. Selection notifies our billing department.
+                            No automated payments are processed here. Selection notifies our billing
+                            department.
                         </p>
                     </div>
                 </div>
@@ -967,12 +1152,10 @@ function InvoicesPage() {
     );
 }
 
-import { Suspense } from "react";
-
-export default function InvoicesPageWithSuspense() {
+export default function InvoicesPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <InvoicesPage />
+        <Suspense fallback={<div className="p-6">Loading...</div>}>
+            <InvoicesPageContent />
         </Suspense>
     );
 }

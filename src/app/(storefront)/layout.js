@@ -1,3 +1,4 @@
+import "@/styles/website.css";
 import Link from "next/link";
 import StorefrontHeader from "@/components/storefront/StorefrontHeader";
 
@@ -64,7 +65,7 @@ export default function StorefrontLayout({ children }) {
                             <ul className="space-y-2 text-sm text-[var(--color-text-secondary)]">
                                 <li>
                                     <Link
-                                        href="/track-order"
+                                        href="/track"
                                         className="hover:text-[var(--color-primary)]"
                                     >
                                         Track Order

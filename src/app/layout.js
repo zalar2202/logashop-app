@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono, Inter, Playfair_Display } from "next/font/google";
+import "@/styles/tokens.css";
 import "@/styles/tailwind.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -52,8 +53,8 @@ export const metadata = {
     description:
         "Your one-stop shop for high-end electronics, laptops, hardware, and digital assets. Experience premium quality and lightning-fast delivery.",
     keywords: ["electronics", "digital goods", "laptops", "hardware", "software", "LogaShop"],
-    authors: [{ name: "LogaTech Team" }],
-    creator: "LogaTech",
+    authors: [{ name: "LogaShop Team" }],
+    creator: "LogaShop",
 };
 
 export default function RootLayout({ children }) {

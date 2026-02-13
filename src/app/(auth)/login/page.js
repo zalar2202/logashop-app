@@ -80,7 +80,7 @@ export default function LoginPage() {
                         >
                             <Image
                                 src="/assets/logo/LogaTech-512.webp"
-                                alt="LogaTech"
+                                alt="LogaShop"
                                 width={48}
                                 height={48}
                                 className="w-12 h-12 object-contain brightness-0 invert"
@@ -91,7 +91,7 @@ export default function LoginPage() {
                             className="text-4xl font-bold mb-4"
                             style={{ color: "var(--color-text-primary)" }}
                         >
-                            LogaTech Panel
+                            LogaShop Panel
                         </h1>
 
                         <p
@@ -155,7 +155,7 @@ export default function LoginPage() {
                             >
                                 <Image
                                     src="/assets/logo/LogaTech-512.webp"
-                                    alt="LogaTech"
+                                    alt="LogaShop"
                                     width={48}
                                     height={48}
                                     className="w-12 h-12 object-contain brightness-0 invert"
@@ -165,7 +165,7 @@ export default function LoginPage() {
                                 className="text-2xl font-bold"
                                 style={{ color: "var(--color-text-primary)" }}
                             >
-                                LogaTech Admin
+                                LogaShop Admin
                             </h2>
                         </div>
 

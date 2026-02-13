@@ -38,11 +38,8 @@ erDiagram
 
 ### 1. User
 
-Extends the logatech-en User model with e-commerce fields.
-
 ```javascript
 User {
-  // From logatech-en (existing)
   _id: ObjectId,
   email: String (unique),
   password: String (hashed),

@@ -2,16 +2,14 @@ import mongoose from "mongoose";
 
 const WishlistSchema = new mongoose.Schema(
     {
-        // For logged-in users
+        // For logged-in users (index via schema.index below)
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            index: true,
         },
-        // For guest wishlists
+        // For guest wishlists (index via schema.index below)
         sessionId: {
             type: String,
-            index: true,
         },
         products: [
             {

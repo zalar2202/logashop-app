@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
-// Module level validation is removed to prevent build-time crashes. 
+// Module level validation is removed to prevent build-time crashes.
 // Validation is performed inside each function that requires the secret.
 
 /**
@@ -28,7 +28,7 @@ export function generateToken(payload) {
             JWT_SECRET,
             {
                 expiresIn: JWT_EXPIRES_IN,
-                issuer: "logatech-admin-panel",
+                issuer: "logashop-admin-panel",
             }
         );
 
@@ -51,7 +51,7 @@ export function verifyToken(token) {
     }
     try {
         const decoded = jwt.verify(token, JWT_SECRET, {
-            issuer: "logatech-admin-panel",
+            issuer: "logashop-admin-panel",
         });
 
         return decoded;

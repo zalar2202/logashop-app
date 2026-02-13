@@ -64,7 +64,7 @@ export const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
                                 className="text-lg font-bold tracking-tight"
                                 style={{ color: "var(--color-text-primary)" }}
                             >
-                                LogaTech
+                                LogaShop
                             </h1>
                         </div>
                     ) : (
@@ -300,7 +300,7 @@ export const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
                                         color: "var(--color-text-primary)",
                                     }}
                                 >
-                                    LogaTech
+                                    LogaShop
                                 </p>
                                 <p
                                     className="text-xs truncate mt-0.5"

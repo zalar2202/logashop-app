@@ -1,22 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { 
-    Search, 
-    Globe, 
-    CheckCircle, 
-    AlertCircle, 
+import {
+    Search,
+    Globe,
+    CheckCircle,
+    AlertCircle,
     AlertTriangle,
     Image as ImageIcon,
     Eye,
     EyeOff,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
 } from "lucide-react";
 
 /**
  * SEO Preview & Analysis Component
- * 
+ *
  * Shows a Google-like search result preview and provides
  * SEO recommendations for blog posts.
  */
@@ -46,40 +46,75 @@ export function SEOPreview({
 
     const displayTitle = metaTitle || title || "Page Title";
     const displayUrl = `${baseUrl}/blog/${slug || "your-post-slug"}`;
-    const displayDescription = metaDescription || "Add a meta description to improve your search visibility...";
+    const displayDescription =
+        metaDescription || "Add a meta description to improve your search visibility...";
 
     // Calculate scores
     const getTitleScore = () => {
         const length = (metaTitle || title).length;
         if (length === 0) return { score: 0, status: "error", message: "Title is required" };
-        if (length < SEO_LIMITS.metaTitle.min) return { score: 40, status: "warning", message: `Too short (${length}/${SEO_LIMITS.metaTitle.min} min)` };
-        if (length > SEO_LIMITS.metaTitle.max) return { score: 50, status: "warning", message: `Too long (${length}/${SEO_LIMITS.metaTitle.max} max)` };
+        if (length < SEO_LIMITS.metaTitle.min)
+            return {
+                score: 40,
+                status: "warning",
+                message: `Too short (${length}/${SEO_LIMITS.metaTitle.min} min)`,
+            };
+        if (length > SEO_LIMITS.metaTitle.max)
+            return {
+                score: 50,
+                status: "warning",
+                message: `Too long (${length}/${SEO_LIMITS.metaTitle.max} max)`,
+            };
         return { score: 100, status: "success", message: `Good length (${length} chars)` };
     };
 
     const getDescriptionScore = () => {
         const length = metaDescription.length;
         if (length === 0) return { score: 0, status: "error", message: "Description is required" };
-        if (length < SEO_LIMITS.metaDescription.min) return { score: 40, status: "warning", message: `Too short (${length}/${SEO_LIMITS.metaDescription.min} min)` };
-        if (length > SEO_LIMITS.metaDescription.max) return { score: 50, status: "warning", message: `Too long (${length}/${SEO_LIMITS.metaDescription.max} max)` };
+        if (length < SEO_LIMITS.metaDescription.min)
+            return {
+                score: 40,
+                status: "warning",
+                message: `Too short (${length}/${SEO_LIMITS.metaDescription.min} min)`,
+            };
+        if (length > SEO_LIMITS.metaDescription.max)
+            return {
+                score: 50,
+                status: "warning",
+                message: `Too long (${length}/${SEO_LIMITS.metaDescription.max} max)`,
+            };
         return { score: 100, status: "success", message: `Good length (${length} chars)` };
     };
 
     const getSlugScore = () => {
         if (!slug) return { score: 0, status: "error", message: "Slug is required" };
-        if (slug.length > SEO_LIMITS.slug.max) return { score: 50, status: "warning", message: "Slug is too long" };
-        if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return { score: 30, status: "error", message: "Invalid slug format" };
+        if (slug.length > SEO_LIMITS.slug.max)
+            return { score: 50, status: "warning", message: "Slug is too long" };
+        if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))
+            return { score: 30, status: "error", message: "Invalid slug format" };
         return { score: 100, status: "success", message: "Good URL structure" };
     };
 
     const getWordCountScore = () => {
         // Strip HTML tags
-        const plainText = content.replace(/<[^>]*>/g, ' ');
-        const wordCount = plainText.split(/\s+/).filter(word => word.length > 0).length;
-        
-        if (wordCount === 0) return { score: 0, status: "error", message: "Content is empty", count: 0 };
-        if (wordCount < SEO_LIMITS.content.min) return { score: 40, status: "warning", message: `Too short (${wordCount}/${SEO_LIMITS.content.min} words)`, count: wordCount };
-        return { score: 100, status: "success", message: `Good length (${wordCount} words)`, count: wordCount };
+        const plainText = content.replace(/<[^>]*>/g, " ");
+        const wordCount = plainText.split(/\s+/).filter((word) => word.length > 0).length;
+
+        if (wordCount === 0)
+            return { score: 0, status: "error", message: "Content is empty", count: 0 };
+        if (wordCount < SEO_LIMITS.content.min)
+            return {
+                score: 40,
+                status: "warning",
+                message: `Too short (${wordCount}/${SEO_LIMITS.content.min} words)`,
+                count: wordCount,
+            };
+        return {
+            score: 100,
+            status: "success",
+            message: `Good length (${wordCount} words)`,
+            count: wordCount,
+        };
     };
 
     const titleScore = getTitleScore();
@@ -87,7 +122,9 @@ export function SEOPreview({
     const slugScore = getSlugScore();
     const wordCountScore = getWordCountScore();
 
-    const overallScore = Math.round((titleScore.score + descriptionScore.score + slugScore.score + wordCountScore.score) / 4);
+    const overallScore = Math.round(
+        (titleScore.score + descriptionScore.score + slugScore.score + wordCountScore.score) / 4
+    );
 
     const getScoreColor = (score) => {
         if (score >= 80) return "text-green-500";
@@ -179,7 +216,7 @@ export function SEOPreview({
                                         <span className="text-white text-xs font-bold">L</span>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-800">LogaTech</div>
+                                        <div className="text-sm text-gray-800">LogaShop</div>
                                         <div className="text-xs text-gray-500 truncate max-w-[300px]">
                                             {displayUrl}
                                         </div>
@@ -233,21 +270,21 @@ export function SEOPreview({
                             <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
                                 SEO Checklist
                             </h4>
-                            
+
                             <div className="flex items-center gap-2 text-sm">
                                 {getStatusIcon(titleScore.status)}
                                 <span className="text-[var(--color-text-secondary)]">
                                     Title: {titleScore.message}
                                 </span>
                             </div>
-                            
+
                             <div className="flex items-center gap-2 text-sm">
                                 {getStatusIcon(descriptionScore.status)}
                                 <span className="text-[var(--color-text-secondary)]">
                                     Description: {descriptionScore.message}
                                 </span>
                             </div>
-                            
+
                             <div className="flex items-center gap-2 text-sm">
                                 {getStatusIcon(slugScore.status)}
                                 <span className="text-[var(--color-text-secondary)]">
@@ -269,7 +306,8 @@ export function SEOPreview({
                                     <AlertTriangle size={16} className="text-yellow-500" />
                                 )}
                                 <span className="text-[var(--color-text-secondary)]">
-                                    Keywords: {keywords.length} tags added ({keywords.length >= 3 ? "Good" : "Add at least 3"})
+                                    Keywords: {keywords.length} tags added (
+                                    {keywords.length >= 3 ? "Good" : "Add at least 3"})
                                 </span>
                             </div>
 
@@ -280,7 +318,8 @@ export function SEOPreview({
                                     <AlertTriangle size={16} className="text-yellow-500" />
                                 )}
                                 <span className="text-[var(--color-text-secondary)]">
-                                    OG Image: {ogImage ? "Set" : "Not set (recommended for social sharing)"}
+                                    OG Image:{" "}
+                                    {ogImage ? "Set" : "Not set (recommended for social sharing)"}
                                 </span>
                             </div>
                         </div>

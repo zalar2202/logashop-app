@@ -81,15 +81,21 @@ export const sendNotification = async ({
                         </div>
                         <h2 style="color: #111827; margin-top: 0;">${title}</h2>
                         <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">${message}</p>
-                        ${actionUrl ? `
+                        ${
+                            actionUrl
+                                ? `
                             <div style="margin-top: 30px;">
-                                <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}${actionUrl}" class="button">
-                                    ${actionLabel || 'View Details'}
+                                <a href="${
+                                    process.env.NEXT_PUBLIC_APP_URL || ""
+                                }${actionUrl}" class="button">
+                                    ${actionLabel || "View Details"}
                                 </a>
                             </div>
-                        ` : ''}
+                        `
+                                : ""
+                        }
                     `,
-                    fromType: 'INFO'
+                    fromType: "INFO",
                 });
                 emailSent = emailResult.success;
             } else {
@@ -291,7 +297,7 @@ export const notifyUserCreated = async (newUserId, createdByUserId) => {
 
     return await sendNotification({
         recipientId: newUserId,
-        title: "Welcome to LogaTech Panel!",
+        title: "Welcome to LogaShop Panel!",
         message: `Your account has been created by ${createdBy.name}. You can now log in and start using the platform.`,
         type: "success",
         senderId: createdByUserId,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { fetchUsers, deleteUser, setFilters, setPage } from "@/features/users/usersSlice";
@@ -27,7 +27,7 @@ import { Users, Plus, Search, Filter, ShoppingCart, Package } from "lucide-react
 import { ContentWrapper } from "@/components/layout/ContentWrapper";
 import axios from "axios";
 
-export default function UsersPage() {
+function UsersPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const dispatch = useAppDispatch();
@@ -545,15 +545,24 @@ export default function UsersPage() {
                     <div className="flex items-center gap-3 p-3 bg-indigo-50 dark:bg-indigo-900/10 rounded-lg">
                         <Avatar src={selectedUserForCart?.avatar} size="sm" />
                         <div>
-                            <p className="text-sm font-bold text-indigo-900 dark:text-indigo-100">{selectedUserForCart?.name}</p>
-                            <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70">{selectedUserForCart?.email}</p>
+                            <p className="text-sm font-bold text-indigo-900 dark:text-indigo-100">
+                                {selectedUserForCart?.name}
+                            </p>
+                            <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70">
+                                {selectedUserForCart?.email}
+                            </p>
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">Select Package</label>
+                        <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">
+                            Select Package
+                        </label>
                         <div className="relative">
-                            <Package size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]" />
+                            <Package
+                                size={18}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
+                            />
                             <select
                                 value={selectedPackage}
                                 onChange={(e) => setSelectedPackage(e.target.value)}
@@ -586,5 +595,19 @@ export default function UsersPage() {
                 </div>
             </Modal>
         </ContentWrapper>
+    );
+}
+
+export default function UsersPage() {
+    return (
+        <Suspense
+            fallback={
+                <ContentWrapper>
+                    <Skeleton className="h-64" />
+                </ContentWrapper>
+            }
+        >
+            <UsersPageContent />
+        </Suspense>
     );
 }

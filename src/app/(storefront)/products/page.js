@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Grid, List, SlidersHorizontal, X, Star, ChevronDown } from "lucide-react";
@@ -8,9 +8,7 @@ import axios from "axios";
 import ProductCard from "@/components/products/ProductCard";
 import { SkeletonProduct } from "@/components/common/Skeleton";
 
-// Product Card Component
-
-export default function ProductsPage() {
+function ProductsPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -270,13 +268,21 @@ export default function ProductsPage() {
                                 <div className="hidden sm:flex items-center gap-1 border border-[var(--color-border)] rounded-lg p-1">
                                     <button
                                         onClick={() => setViewMode("grid")}
-                                        className={`p-1.5 rounded ${viewMode === "grid" ? "bg-[var(--color-primary)] text-white" : "text-[var(--color-text-secondary)]"}`}
+                                        className={`p-1.5 rounded ${
+                                            viewMode === "grid"
+                                                ? "bg-[var(--color-primary)] text-white"
+                                                : "text-[var(--color-text-secondary)]"
+                                        }`}
                                     >
                                         <Grid size={18} />
                                     </button>
                                     <button
                                         onClick={() => setViewMode("list")}
-                                        className={`p-1.5 rounded ${viewMode === "list" ? "bg-[var(--color-primary)] text-white" : "text-[var(--color-text-secondary)]"}`}
+                                        className={`p-1.5 rounded ${
+                                            viewMode === "list"
+                                                ? "bg-[var(--color-primary)] text-white"
+                                                : "text-[var(--color-text-secondary)]"
+                                        }`}
                                     >
                                         <List size={18} />
                                     </button>
@@ -340,7 +346,11 @@ export default function ProductsPage() {
                         {/* Products Grid/List */}
                         {loading ? (
                             <div
-                                className={`grid ${viewMode === "grid" ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"} gap-4 md:gap-6`}
+                                className={`grid ${
+                                    viewMode === "grid"
+                                        ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                                        : "grid-cols-1"
+                                } gap-4 md:gap-6`}
                             >
                                 {[...Array(8)].map((_, i) => (
                                     <SkeletonProduct key={i} viewMode={viewMode} />
@@ -360,7 +370,11 @@ export default function ProductsPage() {
                             </div>
                         ) : (
                             <div
-                                className={`grid ${viewMode === "grid" ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"} gap-4 md:gap-6`}
+                                className={`grid ${
+                                    viewMode === "grid"
+                                        ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                                        : "grid-cols-1"
+                                } gap-4 md:gap-6`}
                             >
                                 {products.map((product) => (
                                     <ProductCard
@@ -390,7 +404,11 @@ export default function ProductsPage() {
                                         onClick={() =>
                                             setPagination((prev) => ({ ...prev, page: i + 1 }))
                                         }
-                                        className={`w-10 h-10 rounded-lg ${pagination.page === i + 1 ? "bg-[var(--color-primary)] text-white" : "border border-[var(--color-border)]"}`}
+                                        className={`w-10 h-10 rounded-lg ${
+                                            pagination.page === i + 1
+                                                ? "bg-[var(--color-primary)] text-white"
+                                                : "border border-[var(--color-border)]"
+                                        }`}
                                     >
                                         {i + 1}
                                     </button>
@@ -410,5 +428,23 @@ export default function ProductsPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ProductsPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="container mx-auto px-4 py-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {[...Array(8)].map((_, i) => (
+                            <SkeletonProduct key={i} />
+                        ))}
+                    </div>
+                </div>
+            }
+        >
+            <ProductsPageContent />
+        </Suspense>
     );
 }

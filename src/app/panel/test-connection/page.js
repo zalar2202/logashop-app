@@ -79,7 +79,11 @@ export default function TestConnectionPage() {
                                         : "bg-red-50 dark:bg-red-900/20"
                                 }`}
                                 style={{
-                                    borderLeft: `4px solid ${result.success ? "var(--color-success)" : "var(--color-error)"}`,
+                                    borderLeft: `4px solid ${
+                                        result.success
+                                            ? "var(--color-success)"
+                                            : "var(--color-error)"
+                                    }`,
                                 }}
                             >
                                 <div className="flex items-start gap-3">
@@ -237,7 +241,7 @@ export default function TestConnectionPage() {
                             MongoDB URI:
                         </span>
                         <span style={{ color: "var(--color-text-secondary)" }}>
-                            mongodb://localhost:27017/logatech
+                            mongodb://localhost:27017/logashop
                         </span>
                     </div>
                     <div

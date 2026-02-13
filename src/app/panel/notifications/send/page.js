@@ -69,10 +69,10 @@ export default function SendNotificationPage() {
                     values.recipientType === "all"
                         ? "all users"
                         : values.recipientType === "role"
-                          ? `all ${values.recipients}s`
-                          : values.recipientType === "multiple"
-                            ? `${values.recipients.length} users`
-                            : "1 user"
+                        ? `all ${values.recipients}s`
+                        : values.recipientType === "multiple"
+                        ? `${values.recipients.length} users`
+                        : "1 user"
                 }`,
             });
 
@@ -89,7 +89,7 @@ export default function SendNotificationPage() {
     const templates = [
         {
             name: "Welcome",
-            title: "Welcome to LogaTech Panel!",
+            title: "Welcome to LogaShop Panel!",
             message: "Your account has been created successfully. Start exploring the platform!",
             type: "success",
         },
@@ -275,16 +275,31 @@ export default function SendNotificationPage() {
 
                                 {/* Email Checkbox */}
                                 <div className="flex items-center h-full pt-6">
-                                    <label className="flex items-center gap-3 cursor-pointer p-3 border rounded-lg w-full hover:bg-gray-50 dark:hover:bg-white/5 transition-colors" style={{ borderColor: 'var(--color-border)' }}>
+                                    <label
+                                        className="flex items-center gap-3 cursor-pointer p-3 border rounded-lg w-full hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                                        style={{ borderColor: "var(--color-border)" }}
+                                    >
                                         <input
                                             type="checkbox"
                                             checked={values.email}
-                                            onChange={(e) => setFieldValue('email', e.target.checked)}
+                                            onChange={(e) =>
+                                                setFieldValue("email", e.target.checked)
+                                            }
                                             className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                         />
                                         <div>
-                                            <span className="font-medium block" style={{ color: 'var(--color-text-primary)' }}>Send via Email</span>
-                                            <span className="text-xs block" style={{ color: 'var(--color-text-secondary)' }}>Send a copy to user's email inbox</span>
+                                            <span
+                                                className="font-medium block"
+                                                style={{ color: "var(--color-text-primary)" }}
+                                            >
+                                                Send via Email
+                                            </span>
+                                            <span
+                                                className="text-xs block"
+                                                style={{ color: "var(--color-text-secondary)" }}
+                                            >
+                                                Send a copy to user's email inbox
+                                            </span>
                                         </div>
                                     </label>
                                 </div>
@@ -336,10 +351,10 @@ export default function SendNotificationPage() {
                                                             values.type === "success"
                                                                 ? "success"
                                                                 : values.type === "error"
-                                                                  ? "danger"
-                                                                  : values.type === "warning"
-                                                                    ? "warning"
-                                                                    : "primary"
+                                                                ? "danger"
+                                                                : values.type === "warning"
+                                                                ? "warning"
+                                                                : "primary"
                                                         }
                                                     >
                                                         {values.type}
@@ -350,7 +365,9 @@ export default function SendNotificationPage() {
                                                     style={{
                                                         color: "var(--color-text-secondary)",
                                                     }}
-                                                    dangerouslySetInnerHTML={{ __html: values.message }}
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: values.message,
+                                                    }}
                                                 />
                                                 {values.actionLabel && (
                                                     <button

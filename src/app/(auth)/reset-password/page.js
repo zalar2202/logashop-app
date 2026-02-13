@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Link, Loader2, ArrowLeft, Eye, EyeOff, Lock } from "lucide-react"; // Wait, "Link" is from next/link
 import NextLink from "next/link";
 import { toast } from "sonner";
-import { Eye as EyeIcon, EyeOff as EyeOffIcon, Lock as LockIcon } from "lucide-react";
+import { Loader2, Eye as EyeIcon, EyeOff as EyeOffIcon, Lock as LockIcon } from "lucide-react";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams.get("token");
@@ -189,5 +188,19 @@ function Check({ className }) {
         >
             <polyline points="20 6 9 17 4 12" />
         </svg>
+    );
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="max-w-md mx-auto p-6 flex items-center justify-center min-h-[200px]">
+                    <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
+                </div>
+            }
+        >
+            <ResetPasswordForm />
+        </Suspense>
     );
 }

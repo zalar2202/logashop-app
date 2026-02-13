@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
 /**
- * LogaTech Email Service
+ * LogaShop Email Service
  *
  * Uses SMTP settings from environment variables.
  * Supports different "sender" profiles (billing, support, info, etc.)
@@ -20,10 +20,10 @@ const smtpConfig = {
 
 // Default Senders (Independent of SMTP_USER login)
 const SENDERS = {
-    INFO: `"LogaTech Info" <${process.env.SMTP_FROM_INFO || "info@logatech.net"}>`,
-    BILLING: `"LogaTech Billing" <${process.env.SMTP_FROM_BILLING || "billing@logatech.net"}>`,
-    SUPPORT: `"LogaTech Support" <${process.env.SMTP_FROM_SUPPORT || "support@logatech.net"}>`,
-    CONTACT: `"LogaTech Contact" <${process.env.SMTP_FROM_CONTACT || "contact@logatech.net"}>`,
+    INFO: `"LogaShop Info" <${process.env.SMTP_FROM_INFO || "info@logatech.net"}>`,
+    BILLING: `"LogaShop Billing" <${process.env.SMTP_FROM_BILLING || "billing@logatech.net"}>`,
+    SUPPORT: `"LogaShop Support" <${process.env.SMTP_FROM_SUPPORT || "support@logatech.net"}>`,
+    CONTACT: `"LogaShop Contact" <${process.env.SMTP_FROM_CONTACT || "contact@logatech.net"}>`,
 };
 
 /**
@@ -48,15 +48,15 @@ const emailTemplate = (content, title) => `
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">LT LogaTech</div>
+            <div class="logo">LT LogaShop</div>
             <div style="font-size: 14px; opacity: 0.9;">${title || "Notification"}</div>
         </div>
         <div class="content">
             ${content}
         </div>
         <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} LogaTech. All rights reserved.</p>
-            <p>You received this email because you are a registered member of LogaTech Panel.</p>
+            <p>&copy; ${new Date().getFullYear()} LogaShop. All rights reserved.</p>
+            <p>You received this email because you are a registered member of LogaShop Panel.</p>
         </div>
     </div>
 </body>

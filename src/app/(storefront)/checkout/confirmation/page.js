@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -12,13 +12,12 @@ import {
     Copy,
     ArrowRight,
     ShoppingBag,
-    Printer,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function OrderConfirmationPage() {
+function OrderConfirmationContent() {
     const searchParams = useSearchParams();
     const orderNumber = searchParams.get("order");
     const orderId = searchParams.get("order_id");
@@ -220,12 +219,12 @@ export default function OrderConfirmationPage() {
                                             order.status === "pending_payment"
                                                 ? "bg-amber-100 text-amber-700"
                                                 : order.status === "processing"
-                                                  ? "bg-blue-100 text-blue-700"
-                                                  : order.status === "shipped"
-                                                    ? "bg-purple-100 text-purple-700"
-                                                    : order.status === "delivered"
-                                                      ? "bg-green-100 text-green-700"
-                                                      : "bg-gray-100 text-gray-700"
+                                                ? "bg-blue-100 text-blue-700"
+                                                : order.status === "shipped"
+                                                ? "bg-purple-100 text-purple-700"
+                                                : order.status === "delivered"
+                                                ? "bg-green-100 text-green-700"
+                                                : "bg-gray-100 text-gray-700"
                                         }`}
                                     >
                                         {order.status
@@ -268,5 +267,19 @@ export default function OrderConfirmationPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function OrderConfirmationPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="min-h-[60vh] flex items-center justify-center">
+                    <div className="animate-spin w-10 h-10 border-4 border-[var(--color-primary)] border-t-transparent rounded-full" />
+                </div>
+            }
+        >
+            <OrderConfirmationContent />
+        </Suspense>
     );
 }

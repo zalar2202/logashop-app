@@ -50,10 +50,10 @@ logashop/
 ### Step B — Ensure the web app still runs
 From repo root:
 ```bash
-cd apps/web
 npm install
-npm run dev
+npm run dev:web
 ```
+(Web runs on port **7777**.)
 
 ---
 
@@ -94,7 +94,7 @@ Create/replace **root** `package.json`:
     "dev:mobile": "npm --workspace apps/mobile run start",
     "dev:all": "concurrently -n WEB,MOBILE -c auto "npm run dev:web" "npm run dev:mobile"",
 
-    "install:all": "npm install && npm --workspace apps/web install && npm --workspace apps/mobile install",
+    "install:all": "npm install",
 
     "lint:web": "npm --workspace apps/web run lint",
     "lint:mobile": "npm --workspace apps/mobile run lint",
@@ -128,14 +128,14 @@ Now you can run:
 ### The rule
 **Your phone cannot call `localhost` on your PC.**
 
-If web/backend runs on your PC at:
-- `http://localhost:3000`
+This project runs the web/API on port **7777**. If the backend runs on your PC at:
+- `http://localhost:7777`
 
 Your phone must use:
-- `http://<YOUR_PC_LAN_IP>:3000`
+- `http://<YOUR_PC_LAN_IP>:7777`
 
 Example:
-- `http://192.168.1.25:3000`
+- `http://192.168.1.25:7777`
 
 ### How to find your PC LAN IP (Windows)
 Open PowerShell:
@@ -151,7 +151,7 @@ Look for **IPv4 Address** under your active network adapter (Wi‑Fi/Ethernet).
 ### Create `apps/mobile/.env`
 Example:
 ```env
-EXPO_PUBLIC_API_BASE_URL=http://192.168.1.25:3000
+EXPO_PUBLIC_API_BASE_URL=http://192.168.1.25:7777
 ```
 
 In Expo (SDK 49+), variables prefixed with `EXPO_PUBLIC_` are available in the app.
@@ -205,11 +205,11 @@ If QR connection fails:
 
 If Expo or your phone can’t connect to your PC:
 - Allow Node.js / Expo through Windows Defender Firewall
-- Ensure your backend port (usually 3000) is reachable from LAN
+- Ensure your backend port (**7777** for this project) is reachable from LAN
 
 A quick test:
 Open on your phone’s browser:
-- `http://<PC_LAN_IP>:3000`
+- `http://<PC_LAN_IP>:7777`
 
 If your phone can’t open that URL, the mobile app won’t be able to call your API either.
 

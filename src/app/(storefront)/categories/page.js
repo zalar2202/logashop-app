@@ -1,4 +1,6 @@
 import Link from "next/link";
+
+export const dynamic = "force-dynamic";
 import dbConnect from "@/lib/mongodb";
 import Category from "@/models/Category";
 import { ArrowRight, Grid } from "lucide-react";

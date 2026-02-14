@@ -1,4 +1,6 @@
 import Link from "next/link";
+
+export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import dbConnect from "@/lib/mongodb";
 import Category from "@/models/Category";
@@ -225,11 +227,10 @@ export default async function CategoryPage({ params, searchParams }) {
                                 <Link
                                     key={pageNum}
                                     href={`/categories/${slug}?page=${pageNum}${sort ? `&sort=${sort}` : ""}`}
-                                    className={`w-10 h-10 flex items-center justify-center rounded-lg ${
-                                        page === pageNum
+                                    className={`w-10 h-10 flex items-center justify-center rounded-lg ${page === pageNum
                                             ? "bg-[var(--color-primary)] text-white"
                                             : "border border-[var(--color-border)] hover:bg-gray-50"
-                                    }`}
+                                        }`}
                                 >
                                     {pageNum}
                                 </Link>

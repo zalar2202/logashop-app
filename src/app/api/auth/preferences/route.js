@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthToken } from '@/lib/cookies';
-import { verifyToken } from '@/lib/jwt';
+import { verifyAuth } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -12,28 +11,13 @@ import User from '@/models/User';
  */
 export async function PUT(request) {
     try {
-        // Get token from httpOnly cookie
-        const token = await getAuthToken();
+        const user = await verifyAuth(request);
 
-        if (!token) {
+        if (!user) {
             return NextResponse.json(
                 {
                     success: false,
-                    message: 'Not authenticated - no token found',
-                },
-                { status: 401 }
-            );
-        }
-
-        // Verify JWT token
-        let decoded;
-        try {
-            decoded = verifyToken(token);
-        } catch (error) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: error.message || 'Invalid or expired token',
+                    message: 'Not authenticated',
                 },
                 { status: 401 }
             );
@@ -81,9 +65,9 @@ export async function PUT(request) {
         await connectDB();
 
         // Fetch user from database
-        const user = await User.findById(decoded.userId);
+        const fullUser = await User.findById(user._id);
 
-        if (!user) {
+        if (!fullUser) {
             return NextResponse.json(
                 {
                     success: false,
@@ -94,7 +78,7 @@ export async function PUT(request) {
         }
 
         // Check if account is active
-        if (user.status === 'suspended' || user.accountDeletedAt) {
+        if (fullUser.status === 'suspended' || fullUser.accountDeletedAt) {
             return NextResponse.json(
                 {
                     success: false,
@@ -105,19 +89,19 @@ export async function PUT(request) {
         }
 
         // Update preferences (merge with existing)
-        user.preferences = {
-            ...user.preferences,
+        fullUser.preferences = {
+            ...fullUser.preferences,
             ...preferences,
         };
 
         // Save updated user
-        await user.save();
+        await fullUser.save();
 
         return NextResponse.json(
             {
                 success: true,
                 message: 'Preferences updated successfully',
-                preferences: user.preferences,
+                preferences: fullUser.preferences,
             },
             { status: 200 }
         );

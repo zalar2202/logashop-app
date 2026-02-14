@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthToken } from '@/lib/cookies';
-import { verifyToken } from '@/lib/jwt';
+import { verifyAuth } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -13,28 +12,13 @@ import User from '@/models/User';
  */
 export async function PUT(request) {
     try {
-        // Get token from httpOnly cookie
-        const token = await getAuthToken();
+        const user = await verifyAuth(request);
 
-        if (!token) {
+        if (!user) {
             return NextResponse.json(
                 {
                     success: false,
-                    message: 'Not authenticated - no token found',
-                },
-                { status: 401 }
-            );
-        }
-
-        // Verify JWT token
-        let decoded;
-        try {
-            decoded = verifyToken(token);
-        } catch (error) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: error.message || 'Invalid or expired token',
+                    message: 'Not authenticated',
                 },
                 { status: 401 }
             );
@@ -96,9 +80,9 @@ export async function PUT(request) {
         await connectDB();
 
         // Fetch user with password field
-        const user = await User.findByEmailWithPassword(decoded.email);
+        const userWithPassword = await User.findByEmailWithPassword(user.email);
 
-        if (!user) {
+        if (!userWithPassword) {
             return NextResponse.json(
                 {
                     success: false,
@@ -109,7 +93,7 @@ export async function PUT(request) {
         }
 
         // Check if account is active
-        if (user.status === 'suspended' || user.accountDeletedAt) {
+        if (userWithPassword.status === 'suspended' || userWithPassword.accountDeletedAt) {
             return NextResponse.json(
                 {
                     success: false,
@@ -120,7 +104,7 @@ export async function PUT(request) {
         }
 
         // Verify current password
-        const isPasswordValid = await user.comparePassword(currentPassword);
+        const isPasswordValid = await userWithPassword.comparePassword(currentPassword);
 
         if (!isPasswordValid) {
             return NextResponse.json(
@@ -133,14 +117,14 @@ export async function PUT(request) {
         }
 
         // Update password (will be hashed by pre-save middleware)
-        user.password = newPassword;
-        user.lastPasswordChange = new Date();
+        userWithPassword.password = newPassword;
+        userWithPassword.lastPasswordChange = new Date();
 
         // Save user (triggers password hashing middleware)
-        await user.save();
+        await userWithPassword.save();
 
         // Log security event (optional - for future audit trail)
-        console.log(`Password changed for user: ${user.email} at ${new Date().toISOString()}`);
+        console.log(`Password changed for user: ${userWithPassword.email} at ${new Date().toISOString()}`);
 
         return NextResponse.json(
             {

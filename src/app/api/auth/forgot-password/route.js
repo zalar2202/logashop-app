@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { checkRateLimit } from "@/lib/rateLimit";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { notifyPasswordReset } from "@/lib/shopNotifications";
@@ -10,6 +11,13 @@ import { notifyPasswordReset } from "@/lib/shopNotifications";
  */
 export async function POST(req) {
     try {
+        const { allowed } = checkRateLimit(req, "forgot-password");
+        if (!allowed) {
+            return NextResponse.json(
+                { success: false, message: "Too many requests. Please try again later." },
+                { status: 429 }
+            );
+        }
         await dbConnect();
         const { email } = await req.json();
 

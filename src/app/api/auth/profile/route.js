@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthToken } from '@/lib/cookies';
-import { verifyToken } from '@/lib/jwt';
+import { verifyAuth } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { uploadFile, deleteFile } from '@/lib/storage';
@@ -14,28 +13,13 @@ import { uploadFile, deleteFile } from '@/lib/storage';
  */
 export async function PUT(request) {
     try {
-        // Get token from httpOnly cookie
-        const token = await getAuthToken();
+        const user = await verifyAuth(request);
 
-        if (!token) {
+        if (!user) {
             return NextResponse.json(
                 {
                     success: false,
-                    message: 'Not authenticated - no token found',
-                },
-                { status: 401 }
-            );
-        }
-
-        // Verify JWT token
-        let decoded;
-        try {
-            decoded = verifyToken(token);
-        } catch (error) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: error.message || 'Invalid or expired token',
+                    message: 'Not authenticated',
                 },
                 { status: 401 }
             );
@@ -44,10 +28,10 @@ export async function PUT(request) {
         // Connect to database
         await connectDB();
 
-        // Fetch user from database
-        const user = await User.findById(decoded.userId);
+        // Fetch full user from database (verifyAuth returns lean user)
+        const fullUser = await User.findById(user._id);
 
-        if (!user) {
+        if (!fullUser) {
             return NextResponse.json(
                 {
                     success: false,
@@ -58,7 +42,7 @@ export async function PUT(request) {
         }
 
         // Check if account is active
-        if (user.status === 'suspended' || user.accountDeletedAt) {
+        if (fullUser.status === 'suspended' || fullUser.accountDeletedAt) {
             return NextResponse.json(
                 {
                     success: false,
@@ -110,7 +94,7 @@ export async function PUT(request) {
         if (avatarFile && avatarFile.size > 0) {
             try {
                 // Upload new avatar
-                const uploadResult = await uploadFile(avatarFile, 'avatars', user.avatar);
+                const uploadResult = await uploadFile(avatarFile, 'avatars', fullUser.avatar);
 
                 if (!uploadResult.success) {
                     return NextResponse.json(
@@ -137,19 +121,19 @@ export async function PUT(request) {
         }
 
         // Update user fields
-        if (updateData.name) user.name = updateData.name.trim();
-        if (updateData.phone !== undefined) user.phone = updateData.phone ? updateData.phone.trim() : '';
-        if (updateData.bio !== undefined) user.bio = updateData.bio ? updateData.bio.trim() : '';
-        if (updateData.avatar) user.avatar = updateData.avatar;
+        if (updateData.name) fullUser.name = updateData.name.trim();
+        if (updateData.phone !== undefined) fullUser.phone = updateData.phone ? updateData.phone.trim() : '';
+        if (updateData.bio !== undefined) fullUser.bio = updateData.bio ? updateData.bio.trim() : '';
+        if (updateData.avatar) fullUser.avatar = updateData.avatar;
         if (updateData.technicalDetails !== undefined) {
-            user.technicalDetails = {
-                ...user.technicalDetails,
+            fullUser.technicalDetails = {
+                ...fullUser.technicalDetails,
                 ...updateData.technicalDetails
             };
         }
 
         // Save updated user
-        await user.save();
+        await fullUser.save();
 
         // Return updated user data
         return NextResponse.json(
@@ -157,18 +141,18 @@ export async function PUT(request) {
                 success: true,
                 message: 'Profile updated successfully',
                 user: {
-                    id: user._id.toString(),
-                    email: user.email,
-                    name: user.name,
-                    role: user.role,
-                    status: user.status,
-                    phone: user.phone,
-                    avatar: user.avatar,
-                    bio: user.bio,
-                    technicalDetails: user.technicalDetails,
-                    lastLogin: user.lastLogin,
-                    createdAt: user.createdAt,
-                    preferences: user.preferences,
+                    id: fullUser._id.toString(),
+                    email: fullUser.email,
+                    name: fullUser.name,
+                    role: fullUser.role,
+                    status: fullUser.status,
+                    phone: fullUser.phone,
+                    avatar: fullUser.avatar,
+                    bio: fullUser.bio,
+                    technicalDetails: fullUser.technicalDetails,
+                    lastLogin: fullUser.lastLogin,
+                    createdAt: fullUser.createdAt,
+                    preferences: fullUser.preferences,
                 },
             },
             { status: 200 }

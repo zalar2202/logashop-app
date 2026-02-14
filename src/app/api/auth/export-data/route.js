@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthToken } from '@/lib/cookies';
-import { verifyToken } from '@/lib/jwt';
+import { verifyAuth } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -13,28 +12,13 @@ import User from '@/models/User';
  */
 export async function GET(request) {
     try {
-        // Get token from httpOnly cookie
-        const token = await getAuthToken();
+        const user = await verifyAuth(request);
 
-        if (!token) {
+        if (!user) {
             return NextResponse.json(
                 {
                     success: false,
-                    message: 'Not authenticated - no token found',
-                },
-                { status: 401 }
-            );
-        }
-
-        // Verify JWT token
-        let decoded;
-        try {
-            decoded = verifyToken(token);
-        } catch (error) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: error.message || 'Invalid or expired token',
+                    message: 'Not authenticated',
                 },
                 { status: 401 }
             );
@@ -58,9 +42,9 @@ export async function GET(request) {
         await connectDB();
 
         // Fetch user from database (exclude password)
-        const user = await User.findById(decoded.userId);
+        const fullUser = await User.findById(user._id);
 
-        if (!user) {
+        if (!fullUser) {
             return NextResponse.json(
                 {
                     success: false,
@@ -71,38 +55,38 @@ export async function GET(request) {
         }
 
         // Log export request
-        user.dataExportRequests.push({
+        fullUser.dataExportRequests.push({
             requestedAt: new Date(),
             exportedAt: new Date(),
             format: format,
         });
-        await user.save();
+        await fullUser.save();
 
         // Prepare user data for export
         const userData = {
             personalInformation: {
-                name: user.name,
-                email: user.email,
-                phone: user.phone,
-                bio: user.bio,
-                role: user.role,
-                status: user.status,
+                name: fullUser.name,
+                email: fullUser.email,
+                phone: fullUser.phone,
+                bio: fullUser.bio,
+                role: fullUser.role,
+                status: fullUser.status,
             },
             accountInformation: {
-                accountCreated: user.createdAt,
-                lastLogin: user.lastLogin,
-                lastPasswordChange: user.lastPasswordChange,
+                accountCreated: fullUser.createdAt,
+                lastLogin: fullUser.lastLogin,
+                lastPasswordChange: fullUser.lastPasswordChange,
             },
             preferences: {
-                emailNotifications: user.preferences?.emailNotifications,
-                pushNotifications: user.preferences?.pushNotifications,
-                notificationFrequency: user.preferences?.notificationFrequency,
-                theme: user.preferences?.theme,
-                language: user.preferences?.language,
-                dateFormat: user.preferences?.dateFormat,
-                profileVisibility: user.preferences?.profileVisibility,
+                emailNotifications: fullUser.preferences?.emailNotifications,
+                pushNotifications: fullUser.preferences?.pushNotifications,
+                notificationFrequency: fullUser.preferences?.notificationFrequency,
+                theme: fullUser.preferences?.theme,
+                language: fullUser.preferences?.language,
+                dateFormat: fullUser.preferences?.dateFormat,
+                profileVisibility: fullUser.preferences?.profileVisibility,
             },
-            dataExportHistory: user.dataExportRequests.map(req => ({
+            dataExportHistory: fullUser.dataExportRequests.map(req => ({
                 requestedAt: req.requestedAt,
                 format: req.format,
             })),
@@ -119,7 +103,7 @@ export async function GET(request) {
                 status: 200,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Content-Disposition': `attachment; filename="user-data-${user._id}-${Date.now()}.json"`,
+                    'Content-Disposition': `attachment; filename="user-data-${fullUser._id}-${Date.now()}.json"`,
                 },
             });
         } else {
@@ -157,7 +141,7 @@ export async function GET(request) {
                 status: 200,
                 headers: {
                     'Content-Type': 'text/csv',
-                    'Content-Disposition': `attachment; filename="user-data-${user._id}-${Date.now()}.csv"`,
+                    'Content-Disposition': `attachment; filename="user-data-${fullUser._id}-${Date.now()}.csv"`,
                 },
             });
         }

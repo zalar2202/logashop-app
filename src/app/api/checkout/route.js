@@ -12,6 +12,24 @@ import ShippingZone from "@/models/ShippingZone";
 import Coupon from "@/models/Coupon";
 import { notifyOrderConfirmed, notifyLowStock } from "@/lib/shopNotifications";
 
+function isMobileClient(req) {
+    if (req.headers.get("x-client")?.toLowerCase() === "mobile") return true;
+    try {
+        if (new URL(req.url).searchParams.get("client")?.toLowerCase() === "mobile") return true;
+    } catch (_) {}
+    return false;
+}
+
+async function resolveCartSessionId(req, bodySessionId = null) {
+    const cookieStore = await cookies();
+    const fromCookie = cookieStore.get("cart_session")?.value;
+    if (fromCookie) return fromCookie;
+    const fromHeader = req.headers.get("x-cart-session")?.trim();
+    if (fromHeader) return fromHeader;
+    if (bodySessionId && String(bodySessionId).trim()) return String(bodySessionId).trim();
+    return null;
+}
+
 /**
  * POST /api/checkout — Create an order from the current cart
  *
@@ -32,20 +50,6 @@ export async function POST(req) {
         await dbConnect();
 
         const user = await verifyAuth(req).catch(() => null);
-        const cookieStore = await cookies();
-        const sessionId = cookieStore.get("cart_session")?.value;
-
-        // Find cart
-        let cart;
-        if (user) {
-            cart = await Cart.findOne({ userId: user._id });
-        } else if (sessionId) {
-            cart = await Cart.findOne({ sessionId });
-        }
-
-        if (!cart || cart.items.length === 0) {
-            return NextResponse.json({ success: false, error: "Cart is empty" }, { status: 400 });
-        }
 
         const body = await req.json();
         let {
@@ -56,7 +60,28 @@ export async function POST(req) {
             customerNote = "",
             guestEmail = "",
             couponCode = "",
+            sessionId: bodySessionId,
         } = body;
+
+        if (isMobileClient(req) && !user) {
+            return NextResponse.json(
+                { success: false, error: "Login required for checkout on mobile" },
+                { status: 401 }
+            );
+        }
+
+        const sessionId = await resolveCartSessionId(req, bodySessionId);
+
+        let cart;
+        if (user) {
+            cart = await Cart.findOne({ userId: user._id });
+        } else if (sessionId) {
+            cart = await Cart.findOne({ sessionId });
+        }
+
+        if (!cart || cart.items.length === 0) {
+            return NextResponse.json({ success: false, error: "Cart is empty" }, { status: 400 });
+        }
 
         // Validate required fields
         if (!shippingAddress) {

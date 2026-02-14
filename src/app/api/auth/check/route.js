@@ -1,41 +1,23 @@
 import { NextResponse } from "next/server";
-import { getAuthToken } from "@/lib/cookies";
-import { verifyToken } from "@/lib/jwt";
+import { verifyAuth } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
-import User from "@/models/User";
 
 /**
  * Check Authentication Status
  * GET /api/auth/check
  *
- * Verifies JWT token and returns current user data
+ * Verifies JWT token (cookie or Bearer) and returns current user data
  */
-export async function GET() {
+export async function GET(request) {
     try {
-        // Get token from httpOnly cookie
-        const token = await getAuthToken();
+        const user = await verifyAuth(request);
 
-        if (!token) {
+        if (!user) {
             return NextResponse.json(
                 {
                     success: false,
                     authenticated: false,
-                    message: "Not authenticated - no token found",
-                },
-                { status: 401 }
-            );
-        }
-
-        // Verify JWT token
-        let decoded;
-        try {
-            decoded = verifyToken(token);
-        } catch (error) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    authenticated: false,
-                    message: error.message || "Invalid or expired token",
+                    message: "Not authenticated",
                 },
                 { status: 401 }
             );
@@ -43,20 +25,6 @@ export async function GET() {
 
         // Connect to database
         await connectDB();
-
-        // Fetch user from database
-        const user = await User.findById(decoded.userId);
-
-        if (!user) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    authenticated: false,
-                    message: "User not found",
-                },
-                { status: 401 }
-            );
-        }
 
         // Check if user is still active
         if (user.status !== "active") {

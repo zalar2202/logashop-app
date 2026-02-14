@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthToken, clearAuthToken } from '@/lib/cookies';
-import { verifyToken } from '@/lib/jwt';
+import { verifyAuth, clearAuthCookie } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -13,28 +12,13 @@ import User from '@/models/User';
  */
 export async function POST(request) {
     try {
-        // Get token from httpOnly cookie
-        const token = await getAuthToken();
+        const user = await verifyAuth(request);
 
-        if (!token) {
+        if (!user) {
             return NextResponse.json(
                 {
                     success: false,
-                    message: 'Not authenticated - no token found',
-                },
-                { status: 401 }
-            );
-        }
-
-        // Verify JWT token
-        let decoded;
-        try {
-            decoded = verifyToken(token);
-        } catch (error) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: error.message || 'Invalid or expired token',
+                    message: 'Not authenticated',
                 },
                 { status: 401 }
             );
@@ -58,9 +42,9 @@ export async function POST(request) {
         await connectDB();
 
         // Fetch user with password field
-        const user = await User.findByEmailWithPassword(decoded.email);
+        const userWithPassword = await User.findByEmailWithPassword(user.email);
 
-        if (!user) {
+        if (!userWithPassword) {
             return NextResponse.json(
                 {
                     success: false,
@@ -71,7 +55,7 @@ export async function POST(request) {
         }
 
         // Check if account is already deactivated or deleted
-        if (user.status === 'suspended') {
+        if (userWithPassword.status === 'suspended') {
             return NextResponse.json(
                 {
                     success: false,
@@ -81,7 +65,7 @@ export async function POST(request) {
             );
         }
 
-        if (user.accountDeletedAt) {
+        if (userWithPassword.accountDeletedAt) {
             return NextResponse.json(
                 {
                     success: false,
@@ -92,7 +76,7 @@ export async function POST(request) {
         }
 
         // Verify password
-        const isPasswordValid = await user.comparePassword(password);
+        const isPasswordValid = await userWithPassword.comparePassword(password);
 
         if (!isPasswordValid) {
             return NextResponse.json(
@@ -105,14 +89,14 @@ export async function POST(request) {
         }
 
         // Deactivate account
-        user.status = 'suspended';
-        user.accountDeactivatedAt = new Date();
+        userWithPassword.status = 'suspended';
+        userWithPassword.accountDeactivatedAt = new Date();
 
         // Save user
-        await user.save();
+        await userWithPassword.save();
 
         // Log deactivation (for audit trail)
-        console.log(`Account deactivated: ${user.email} at ${new Date().toISOString()}`);
+        console.log(`Account deactivated: ${userWithPassword.email} at ${new Date().toISOString()}`);
         if (reason) {
             console.log(`Deactivation reason: ${reason}`);
         }
@@ -127,7 +111,7 @@ export async function POST(request) {
         );
 
         // Delete auth cookie
-        await clearAuthToken();
+        await clearAuthCookie();
 
         return response;
     } catch (error) {

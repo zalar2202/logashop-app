@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthToken, clearAuthToken } from '@/lib/cookies';
-import { verifyToken } from '@/lib/jwt';
+import { verifyAuth, clearAuthCookie } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { deleteFile } from '@/lib/storage';
@@ -15,28 +14,13 @@ import { deleteFile } from '@/lib/storage';
  */
 export async function DELETE(request) {
     try {
-        // Get token from httpOnly cookie
-        const token = await getAuthToken();
+        const user = await verifyAuth(request);
 
-        if (!token) {
+        if (!user) {
             return NextResponse.json(
                 {
                     success: false,
-                    message: 'Not authenticated - no token found',
-                },
-                { status: 401 }
-            );
-        }
-
-        // Verify JWT token
-        let decoded;
-        try {
-            decoded = verifyToken(token);
-        } catch (error) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: error.message || 'Invalid or expired token',
+                    message: 'Not authenticated',
                 },
                 { status: 401 }
             );
@@ -70,9 +54,9 @@ export async function DELETE(request) {
         await connectDB();
 
         // Fetch user with password field
-        const user = await User.findByEmailWithPassword(decoded.email);
+        const userWithPassword = await User.findByEmailWithPassword(user.email);
 
-        if (!user) {
+        if (!userWithPassword) {
             return NextResponse.json(
                 {
                     success: false,
@@ -83,7 +67,7 @@ export async function DELETE(request) {
         }
 
         // Check if account is already deleted
-        if (user.accountDeletedAt) {
+        if (userWithPassword.accountDeletedAt) {
             return NextResponse.json(
                 {
                     success: false,
@@ -94,7 +78,7 @@ export async function DELETE(request) {
         }
 
         // Prevent admin from deleting their own account if they're the only admin
-        if (user.role === 'admin') {
+        if (userWithPassword.role === 'admin') {
             const adminCount = await User.countDocuments({ role: 'admin', accountDeletedAt: null });
             if (adminCount <= 1) {
                 return NextResponse.json(
@@ -108,7 +92,7 @@ export async function DELETE(request) {
         }
 
         // Verify password
-        const isPasswordValid = await user.comparePassword(password);
+        const isPasswordValid = await userWithPassword.comparePassword(password);
 
         if (!isPasswordValid) {
             return NextResponse.json(
@@ -121,13 +105,13 @@ export async function DELETE(request) {
         }
 
         // Store user info for logging before deletion
-        const userEmail = user.email;
-        const userId = user._id.toString();
+        const userEmail = userWithPassword.email;
+        const userId = userWithPassword._id.toString();
 
         // Delete avatar file if exists
-        if (user.avatar) {
+        if (userWithPassword.avatar) {
             try {
-                await deleteFile(user.avatar, 'avatars');
+                await deleteFile(userWithPassword.avatar, 'avatars');
             } catch (fileError) {
                 console.error('Error deleting avatar file:', fileError);
                 // Continue with account deletion even if file deletion fails
@@ -136,10 +120,10 @@ export async function DELETE(request) {
 
         // Option 1: Soft delete (recommended for audit trail)
         // Mark account as deleted but keep in database
-        user.accountDeletedAt = new Date();
-        user.status = 'suspended';
-        user.email = `deleted_${Date.now()}_${user.email}`; // Prevent email conflicts
-        await user.save();
+        userWithPassword.accountDeletedAt = new Date();
+        userWithPassword.status = 'suspended';
+        userWithPassword.email = `deleted_${Date.now()}_${userWithPassword.email}`; // Prevent email conflicts
+        await userWithPassword.save();
 
         // Option 2: Hard delete (uncomment if preferred)
         // await User.findByIdAndDelete(user._id);
@@ -160,7 +144,7 @@ export async function DELETE(request) {
         );
 
         // Delete auth cookie
-        await clearAuthToken();
+        await clearAuthCookie();
 
         return response;
     } catch (error) {

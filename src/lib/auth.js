@@ -1,54 +1,74 @@
 import { cookies } from 'next/headers';
-import { verifyToken, extractTokenFromHeader } from '@/lib/jwt';
+import { verifyToken, extractTokenFromHeader, generateToken } from '@/lib/jwt';
+import { setAuthToken, clearAuthToken } from '@/lib/cookies';
 import { COOKIE_NAMES } from '@/constants/config';
 import User from '@/models/User';
-import dbConnect from '@/lib/mongodb';
 
-export async function verifyAuth(request) {
+/**
+ * Extract JWT from request: prefer Authorization Bearer, then cookie.
+ * @param {Request} req - Next.js request
+ * @returns {Promise<string|null>} Token or null
+ */
+export async function extractTokenFromRequest(req) {
+    if (!req) return null;
+    const authHeader = req.headers.get('authorization');
+    const bearerToken = authHeader ? extractTokenFromHeader(authHeader) : null;
+    if (bearerToken) return bearerToken;
+    const cookieStore = await cookies();
+    const cookieToken =
+        cookieStore.get(COOKIE_NAMES.TOKEN)?.value ||
+        cookieStore.get('token')?.value ||
+        cookieStore.get('om_token')?.value;
+    return cookieToken || null;
+}
+
+/**
+ * Get authenticated user from request (cookie or Bearer). Returns null on any failure.
+ * @param {Request} req - Next.js request
+ * @returns {Promise<import('mongoose').Document|null>} User doc without password, or null
+ */
+export async function getAuthenticatedUser(req) {
     try {
-        const cookieStore = await cookies();
-        let token = cookieStore.get(COOKIE_NAMES.TOKEN)?.value || 
-                   cookieStore.get('token')?.value || 
-                   cookieStore.get('om_token')?.value;
-
-        if (!token && request) {
-            // Fallback to Header
-            const authHeader = request.headers.get('authorization');
-            if (authHeader) {
-                token = extractTokenFromHeader(authHeader);
-            }
-        }
-
-        if (!token) {
-            return null;
-        }
-
+        const token = await extractTokenFromRequest(req);
+        if (!token) return null;
         const decoded = verifyToken(token);
-        if (!decoded || !decoded.userId) {
-            return null;
-        }
-
-        // We imported dbConnect, but let's make sure we are connected
-        // It's often safer to import the connection function.
-        // If '@/lib/db' doesn't exist, we might crash again.
-        // Let's use '@/lib/mongodb' if that's the established pattern, 
-        // OR rely on the fact that Mongoose might be cached.
-        
-        // Fetch user permissions/role if needed, or just return basic decoded info.
-        // Ideally we return the full user doc to check role changes/bans.
-        
-        // Lazy load connection if necessary
-        // await dbConnect(); 
-
+        if (!decoded || !decoded.userId) return null;
         const user = await User.findById(decoded.userId).select('-password');
-        
-        if (!user) {
-             return null;
-        }
-
-        return user;
+        return user || null;
     } catch (error) {
-        console.error("Auth verification error:", error);
-        return null; // Return null on any failure (expired, invalid, etc)
+        console.error('Auth verification error:', error);
+        return null;
     }
+}
+
+/** @deprecated Use getAuthenticatedUser. Kept as alias for existing callers. */
+export const verifyAuth = getAuthenticatedUser;
+
+/**
+ * Sign an access token for a user (for login / refresh).
+ * @param {Object} user - User doc with _id, email, role
+ * @returns {string} JWT
+ */
+export function signAccessToken(user) {
+    return generateToken({
+        userId: user._id.toString(),
+        email: user.email,
+        role: user.role,
+    });
+}
+
+/**
+ * Set auth token in httpOnly cookie (uses Next.js cookies() for current response).
+ * @param {string} token - JWT
+ * @param {Object} [options] - Cookie options (e.g. maxAge)
+ */
+export async function setAuthCookie(token, options = {}) {
+    await setAuthToken(token, options);
+}
+
+/**
+ * Clear auth cookie (logout).
+ */
+export async function clearAuthCookie() {
+    await clearAuthToken();
 }

@@ -8,12 +8,25 @@ import Product from "@/models/Product";
 import ProductVariant from "@/models/ProductVariant";
 
 /**
- * Helper: Get or create cart for user/guest
+ * Resolve cart sessionId: cookie → X-Cart-Session header → body (for POST/PUT).
  */
-async function getOrCreateCart(req) {
-    const user = await verifyAuth(req).catch(() => null);
+async function resolveCartSessionId(req, bodySessionId = null) {
     const cookieStore = await cookies();
-    let sessionId = cookieStore.get("cart_session")?.value;
+    const fromCookie = cookieStore.get("cart_session")?.value;
+    if (fromCookie) return fromCookie;
+    const fromHeader = req.headers.get("x-cart-session")?.trim();
+    if (fromHeader) return fromHeader;
+    if (bodySessionId && String(bodySessionId).trim()) return String(bodySessionId).trim();
+    return null;
+}
+
+/**
+ * Helper: Get or create cart for user/guest.
+ * sessionId: cookie → X-Cart-Session header → bodySessionId (for POST/PUT).
+ */
+async function getOrCreateCart(req, bodySessionId = null) {
+    const user = await verifyAuth(req).catch(() => null);
+    let sessionId = await resolveCartSessionId(req, bodySessionId);
 
     let cart = null;
 
@@ -134,17 +147,18 @@ export async function GET(req) {
         const subtotal = formattedItems.reduce((sum, item) => sum + item.lineTotal, 0);
         const itemCount = formattedItems.reduce((sum, item) => sum + item.quantity, 0);
 
-        const response = NextResponse.json({
-            success: true,
-            data: {
-                items: formattedItems,
-                subtotal,
-                itemCount,
-                cartId: cart._id,
-            },
-        });
+        const data = {
+            items: formattedItems,
+            subtotal,
+            itemCount,
+            cartId: cart._id,
+        };
+        if (sessionId && !req.headers.get("authorization")) {
+            data.sessionId = sessionId;
+        }
+        const response = NextResponse.json({ success: true, data });
 
-        // Set session cookie for guests
+        // Set session cookie for guests (web)
         if (sessionId && !req.headers.get("authorization")) {
             response.cookies.set("cart_session", sessionId, {
                 httpOnly: true,
@@ -171,7 +185,7 @@ export async function POST(req) {
     try {
         await dbConnect();
         const body = await req.json();
-        const { productId, variantId = null, quantity = 1 } = body;
+        const { productId, variantId = null, quantity = 1, sessionId: bodySessionId } = body;
 
         if (!productId) {
             return NextResponse.json(
@@ -197,7 +211,7 @@ export async function POST(req) {
             );
         }
 
-        const { cart, sessionId } = await getOrCreateCart(req);
+        const { cart, sessionId } = await getOrCreateCart(req, bodySessionId);
 
         // Check if item already exists in cart
         const existingIndex = cart.items.findIndex(
@@ -229,16 +243,20 @@ export async function POST(req) {
 
         await cart.save();
 
+        const responseData = {
+            itemCount: cart.itemCount,
+            subtotal: cart.subtotal,
+        };
+        if (sessionId && !req.headers.get("authorization")) {
+            responseData.sessionId = sessionId;
+        }
         const response = NextResponse.json({
             success: true,
             message: "Item added to cart",
-            data: {
-                itemCount: cart.itemCount,
-                subtotal: cart.subtotal,
-            },
+            data: responseData,
         });
 
-        // Set session cookie for guests
+        // Set session cookie for guests (web)
         if (sessionId) {
             response.cookies.set("cart_session", sessionId, {
                 httpOnly: true,
@@ -265,7 +283,7 @@ export async function PUT(req) {
     try {
         await dbConnect();
         const body = await req.json();
-        const { itemId, quantity } = body;
+        const { itemId, quantity, sessionId: bodySessionId } = body;
 
         if (!itemId || quantity === undefined) {
             return NextResponse.json(
@@ -274,7 +292,7 @@ export async function PUT(req) {
             );
         }
 
-        const { cart } = await getOrCreateCart(req);
+        const { cart } = await getOrCreateCart(req, bodySessionId);
 
         const itemIndex = cart.items.findIndex((item) => item._id.toString() === itemId);
 

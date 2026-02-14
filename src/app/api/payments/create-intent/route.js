@@ -4,6 +4,12 @@ import dbConnect from "@/lib/mongodb";
 import Order from "@/models/Order";
 import { verifyAuth } from "@/lib/auth";
 
+/**
+ * POST /api/payments/create-intent
+ * Creates a Stripe PaymentIntent for the given order. Auth: cookie or Authorization Bearer.
+ * Mobile: call with Bearer token; use the returned clientSecret and id with Stripe
+ * PaymentSheet (iOS/Android) or native SDK to complete payment.
+ */
 export async function POST(req) {
     try {
         await dbConnect();

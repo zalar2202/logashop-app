@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
-import { setAuthCookie, signAccessToken } from '@/lib/auth';
+import { setAuthCookie, signAccessToken, createRefreshToken, getAccessTokenExpiry } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { successResponse, errorResponse } from '@/lib/apiResponse';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -29,78 +29,42 @@ export async function POST(request) {
     try {
         const { allowed } = checkRateLimit(request, 'login');
         if (!allowed) {
-            return NextResponse.json(
-                { success: false, message: 'Too many login attempts. Please try again later.' },
-                { status: 429 }
-            );
+            return errorResponse('Too many login attempts. Please try again later.', 429);
         }
         const body = await request.json();
         const { email, password } = body;
 
-        // Validate input
         if (!email || !password) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Email and password are required',
-                },
-                { status: 400 }
-            );
+            return errorResponse('Email and password are required', 400);
         }
 
-        // Connect to database
         await connectDB();
 
-        // Find user by email (with password field included)
         const user = await User.findByEmailWithPassword(email);
 
         if (!user) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Invalid credentials',
-                },
-                { status: 401 }
-            );
+            return errorResponse('Invalid credentials', 401);
         }
 
-        // Check if user is active
         if (user.status !== 'active') {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Account is not active. Please contact administrator.',
-                },
-                { status: 403 }
-            );
+            return errorResponse('Account is not active. Please contact administrator.', 403);
         }
 
-        // Verify password
         const isPasswordValid = await user.comparePassword(password);
-
         if (!isPasswordValid) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Invalid credentials',
-                },
-                { status: 401 }
-            );
+            return errorResponse('Invalid credentials', 401);
         }
-
-        const token = signAccessToken(user);
-
-        // Set token in httpOnly cookie (web and optionally mobile)
-        await setAuthCookie(token, {
-            maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
-        });
-
-        // Update last login timestamp
-        await user.updateLastLogin();
 
         const isMobile = isMobileClient(request);
-        const payload = {
-            success: true,
+        const accessExpiry = isMobile ? getAccessTokenExpiry() : null;
+        const token = signAccessToken(user, accessExpiry);
+
+        const cookieMaxAge = isMobile ? 30 * 60 : 7 * 24 * 60 * 60;
+        await setAuthCookie(token, { maxAge: cookieMaxAge });
+
+        await user.updateLastLogin();
+
+        const data = {
             message: 'Login successful',
             user: {
                 id: user._id.toString(),
@@ -115,19 +79,16 @@ export async function POST(request) {
             },
         };
         if (isMobile) {
-            payload.accessToken = token;
+            data.accessToken = token;
+            data.refreshToken = await createRefreshToken(user);
+            data.expiresIn = getAccessTokenExpiry();
         }
-        return NextResponse.json(payload, { status: 200 });
+        return successResponse(data);
     } catch (error) {
         console.error('Login error:', error);
-
-        return NextResponse.json(
-            {
-                success: false,
-                message: 'An error occurred during login',
-                error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-            },
-            { status: 500 }
+        return errorResponse(
+            process.env.NODE_ENV === 'development' ? error.message : 'An error occurred during login',
+            500
         );
     }
 }

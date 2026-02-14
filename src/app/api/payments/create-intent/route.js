@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { successResponse, errorResponse } from "@/lib/apiResponse";
 import dbConnect from "@/lib/mongodb";
 import Order from "@/models/Order";
 import { verifyAuth } from "@/lib/auth";
@@ -17,24 +17,17 @@ export async function POST(req) {
         const { orderId } = await req.json();
 
         if (!orderId) {
-            return NextResponse.json(
-                { success: false, error: "Order ID is required" },
-                { status: 400 }
-            );
+            return errorResponse("Order ID is required", 400);
         }
 
-        // Find the order
         const order = await Order.findById(orderId);
 
         if (!order) {
-            return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });
+            return errorResponse("Order not found", 404);
         }
 
         if (order.paymentStatus === "paid") {
-            return NextResponse.json(
-                { success: false, error: "Order is already paid" },
-                { status: 400 }
-            );
+            return errorResponse("Order is already paid", 400);
         }
 
         const user = await verifyAuth(req).catch(() => null);
@@ -53,13 +46,12 @@ export async function POST(req) {
             },
         });
 
-        return NextResponse.json({
-            success: true,
+        return successResponse({
             clientSecret: paymentIntent.client_secret,
             id: paymentIntent.id,
         });
     } catch (error) {
         console.error("Stripe Intent Error:", error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return errorResponse(error.message, 500);
     }
 }

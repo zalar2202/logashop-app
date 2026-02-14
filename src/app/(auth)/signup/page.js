@@ -51,7 +51,10 @@ export default function SignupPage() {
 
             if (response.data.success) {
                 toast.success("Account created successfully! Welcome.");
-                router.push("/panel/dashboard");
+                const user = response.data.user ?? response.data.data?.user;
+                const isAdminOrManager =
+                    user?.role === "admin" || user?.role === "manager";
+                router.push(isAdminOrManager ? "/panel/dashboard" : "/account");
             } else {
                 setError(response.data.message || "Signup failed. Please try again.");
                 toast.error(response.data.message || "Signup failed");

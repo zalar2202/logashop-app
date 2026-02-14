@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import { verifyAuth } from "@/lib/auth";
+import { errorResponse } from "@/lib/apiResponse";
 import dbConnect from "@/lib/mongodb";
 import Cart from "@/models/Cart";
 import Product from "@/models/Product";
@@ -172,7 +173,7 @@ export async function GET(req) {
         return response;
     } catch (error) {
         console.error("GET /api/cart error:", error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return errorResponse(error.message, 500);
     }
 }
 
@@ -188,27 +189,16 @@ export async function POST(req) {
         const { productId, variantId = null, quantity = 1, sessionId: bodySessionId } = body;
 
         if (!productId) {
-            return NextResponse.json(
-                { success: false, error: "productId is required" },
-                { status: 400 }
-            );
+            return errorResponse("productId is required", 400);
         }
 
-        // Validate product and get price
         const priceInfo = await getProductPrice(productId, variantId);
         if (!priceInfo) {
-            return NextResponse.json(
-                { success: false, error: "Product not found or unavailable" },
-                { status: 404 }
-            );
+            return errorResponse("Product not found or unavailable", 404);
         }
 
-        // Check stock
         if (priceInfo.stock <= 0 && !priceInfo.allowBackorder) {
-            return NextResponse.json(
-                { success: false, error: "Product is out of stock" },
-                { status: 400 }
-            );
+            return errorResponse("Product is out of stock", 400);
         }
 
         const { cart, sessionId } = await getOrCreateCart(req, bodySessionId);
@@ -224,10 +214,7 @@ export async function POST(req) {
             // Update quantity
             const newQty = cart.items[existingIndex].quantity + quantity;
             if (newQty > priceInfo.stock && !priceInfo.allowBackorder) {
-                return NextResponse.json(
-                    { success: false, error: `Only ${priceInfo.stock} available` },
-                    { status: 400 }
-                );
+                return errorResponse(`Only ${priceInfo.stock} available`, 400);
             }
             cart.items[existingIndex].quantity = Math.min(newQty, 99);
             cart.items[existingIndex].priceSnapshot = priceInfo.price;
@@ -270,7 +257,7 @@ export async function POST(req) {
         return response;
     } catch (error) {
         console.error("POST /api/cart error:", error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return errorResponse(error.message, 500);
     }
 }
 
@@ -286,10 +273,7 @@ export async function PUT(req) {
         const { itemId, quantity, sessionId: bodySessionId } = body;
 
         if (!itemId || quantity === undefined) {
-            return NextResponse.json(
-                { success: false, error: "itemId and quantity are required" },
-                { status: 400 }
-            );
+            return errorResponse("itemId and quantity are required", 400);
         }
 
         const { cart } = await getOrCreateCart(req, bodySessionId);
@@ -297,10 +281,7 @@ export async function PUT(req) {
         const itemIndex = cart.items.findIndex((item) => item._id.toString() === itemId);
 
         if (itemIndex === -1) {
-            return NextResponse.json(
-                { success: false, error: "Item not found in cart" },
-                { status: 404 }
-            );
+            return errorResponse("Item not found in cart", 404);
         }
 
         if (quantity <= 0) {
@@ -313,10 +294,7 @@ export async function PUT(req) {
 
             if (priceInfo) {
                 if (quantity > priceInfo.stock && !priceInfo.allowBackorder) {
-                    return NextResponse.json(
-                        { success: false, error: `Only ${priceInfo.stock} available` },
-                        { status: 400 }
-                    );
+                    return errorResponse(`Only ${priceInfo.stock} available`, 400);
                 }
                 cart.items[itemIndex].quantity = Math.min(quantity, 99);
                 cart.items[itemIndex].priceSnapshot = priceInfo.price;
@@ -335,7 +313,7 @@ export async function PUT(req) {
         });
     } catch (error) {
         console.error("PUT /api/cart error:", error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return errorResponse(error.message, 500);
     }
 }
 
@@ -358,10 +336,7 @@ export async function DELETE(req) {
         } else if (itemId) {
             cart.items = cart.items.filter((item) => item._id.toString() !== itemId);
         } else {
-            return NextResponse.json(
-                { success: false, error: "itemId or clear=true is required" },
-                { status: 400 }
-            );
+            return errorResponse("itemId or clear=true is required", 400);
         }
 
         await cart.save();
@@ -376,6 +351,6 @@ export async function DELETE(req) {
         });
     } catch (error) {
         console.error("DELETE /api/cart error:", error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return errorResponse(error.message, 500);
     }
 }

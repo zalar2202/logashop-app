@@ -1,19 +1,28 @@
 /**
  * Settings Service
  * Handles all settings-related API calls for user profile, preferences, and account management
+ * API uses envelope { success, data }; we unwrap so callers get payload (data) or legacy shape.
  */
 
 import axiosInstance from "@/lib/axios";
 
+const getPayload = (response) => {
+    const data = response.data?.data ?? response.data;
+    if (response.data?.success !== undefined && typeof data === "object" && data !== null) {
+        return { ...data, success: response.data.success };
+    }
+    return data;
+};
+
 /**
  * Get current user profile
  * Uses the existing /api/auth/check endpoint
- * @returns {Promise<Object>} User profile data
+ * @returns {Promise<Object>} Payload with authenticated, user
  */
 export const getCurrentUser = async () => {
     try {
         const response = await axiosInstance.get("/api/auth/check");
-        return response.data;
+        return getPayload(response);
     } catch (error) {
         throw error;
     }
@@ -50,12 +59,11 @@ export const updateProfile = async (profileData) => {
                     "Content-Type": "multipart/form-data",
                 },
             });
-            return response.data;
+            return getPayload(response);
         } else {
-            // Send as JSON if no file
             const { avatar, ...jsonData } = profileData;
             const response = await axiosInstance.put("/api/auth/profile", jsonData);
-            return response.data;
+            return getPayload(response);
         }
     } catch (error) {
         throw error;
@@ -72,7 +80,7 @@ export const updateProfile = async (profileData) => {
 export const changePassword = async (passwordData) => {
     try {
         const response = await axiosInstance.put("/api/auth/change-password", passwordData);
-        return response.data;
+        return getPayload(response);
     } catch (error) {
         throw error;
     }
@@ -93,7 +101,7 @@ export const changePassword = async (passwordData) => {
 export const updatePreferences = async (preferences) => {
     try {
         const response = await axiosInstance.put("/api/auth/preferences", preferences);
-        return response.data;
+        return getPayload(response);
     } catch (error) {
         throw error;
     }
@@ -125,7 +133,7 @@ export const exportData = async (format = "json") => {
 export const deactivateAccount = async (deactivationData) => {
     try {
         const response = await axiosInstance.post("/api/auth/deactivate", deactivationData);
-        return response.data;
+        return getPayload(response);
     } catch (error) {
         throw error;
     }
@@ -143,7 +151,7 @@ export const deleteAccount = async (deletionData) => {
         const response = await axiosInstance.delete("/api/auth/delete-account", {
             data: deletionData,
         });
-        return response.data;
+        return getPayload(response);
     } catch (error) {
         throw error;
     }

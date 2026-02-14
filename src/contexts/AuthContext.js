@@ -23,6 +23,9 @@ export function AuthProvider({ children }) {
         checkAuth();
     }, []);
 
+    // API now returns envelope { success, data }; payload is in response.data.data
+    const getPayload = (response) => response.data?.data ?? response.data;
+
     /**
      * Check if user is authenticated
      * Calls /api/auth/check which reads httpOnly cookie
@@ -30,20 +33,18 @@ export function AuthProvider({ children }) {
     const checkAuth = async () => {
         try {
             const response = await api.get('/api/auth/check');
-            
-            if (response.data.authenticated && response.data.user) {
-                setUser(response.data.user);
+            const payload = getPayload(response);
+
+            if (payload?.authenticated && payload?.user) {
+                setUser(payload.user);
                 setIsAuthenticated(true);
-                
-                // Optionally store non-sensitive user data in localStorage for quick access
-                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.data.user));
+                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(payload.user));
             } else {
                 setUser(null);
                 setIsAuthenticated(false);
                 localStorage.removeItem(STORAGE_KEYS.USER);
             }
         } catch (error) {
-            // Not authenticated or error occurred
             setUser(null);
             setIsAuthenticated(false);
             localStorage.removeItem(STORAGE_KEYS.USER);
@@ -61,26 +62,21 @@ export function AuthProvider({ children }) {
     const login = async (email, password) => {
         try {
             const response = await api.post('/api/auth/login', { email, password });
-            
-            if (response.data.success && response.data.user) {
-                setUser(response.data.user);
+            const payload = getPayload(response);
+
+            if (response.data?.success && payload?.user) {
+                setUser(payload.user);
                 setIsAuthenticated(true);
-                
-                // Store non-sensitive user data
-                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.data.user));
-                
-                return { success: true };
-            } else {
-                return { 
-                    success: false, 
-                    message: response.data.message || 'Login failed' 
-                };
+                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(payload.user));
+                return { success: true, user: payload.user };
             }
-        } catch (error) {
-            return { 
-                success: false, 
-                message: error.message || 'An error occurred during login' 
+            return {
+                success: false,
+                message: payload?.message || response.data?.error || 'Login failed',
             };
+        } catch (error) {
+            const msg = error.response?.data?.error || error.message;
+            return { success: false, message: msg || 'An error occurred during login' };
         }
     };
 

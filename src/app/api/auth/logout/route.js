@@ -1,35 +1,16 @@
-import { NextResponse } from 'next/server';
-import { clearAuthToken } from '@/lib/cookies';
+import { clearAuthCookie } from '@/lib/auth';
+import { successResponse, errorResponse } from '@/lib/apiResponse';
 
 /**
- * Logout API Route
- * POST /api/auth/logout
- * 
- * Clears the httpOnly cookie containing the JWT token
+ * POST /api/auth/logout — Clears the httpOnly auth cookie
  */
 export async function POST() {
     try {
-        // Clear the auth token cookie
-        await clearAuthToken();
-
-        return NextResponse.json(
-            {
-                success: true,
-                message: 'Logged out successfully',
-            },
-            { status: 200 }
-        );
+        await clearAuthCookie();
+        return successResponse({ message: 'Logged out successfully' });
     } catch (error) {
         console.error('Logout error:', error);
-
-        return NextResponse.json(
-            {
-                success: false,
-                message: 'An error occurred during logout',
-                error: error.message,
-            },
-            { status: 500 }
-        );
+        return errorResponse(error.message, 500);
     }
 }
 

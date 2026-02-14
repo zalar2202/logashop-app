@@ -166,6 +166,14 @@ const UserSchema = new mongoose.Schema(
                     type: String,
                     default: null,
                 },
+                deviceId: {
+                    type: String,
+                    default: null,
+                },
+                appVersion: {
+                    type: String,
+                    default: null,
+                },
                 createdAt: {
                     type: Date,
                     default: Date.now,
@@ -255,30 +263,43 @@ UserSchema.statics.findByEmailWithPassword = function (email) {
  * Method to add or update FCM token
  * @param {string} token - FCM token
  * @param {string} device - Device type (web/ios/android)
- * @param {string} browser - Browser name (optional)
+ * @param {string} [browser] - Browser name (optional)
+ * @param {{ deviceId?: string, appVersion?: string }} [options] - When deviceId is set, replace existing token for that deviceId (one per device)
  * @returns {Promise<Document>} Updated user document
  */
-UserSchema.methods.addFcmToken = async function (token, device = "web", browser = null) {
-    // Check if token already exists
-    const existingTokenIndex = this.fcmTokens.findIndex((t) => t.token === token);
+UserSchema.methods.addFcmToken = async function (token, device = "web", browser = null, options = {}) {
+    const { deviceId = null, appVersion = null } = options;
 
-    if (existingTokenIndex !== -1) {
-        // Update existing token's lastUsed timestamp
-        this.fcmTokens[existingTokenIndex].lastUsed = new Date();
-        if (browser) {
-            this.fcmTokens[existingTokenIndex].browser = browser;
-        }
-    } else {
-        // Add new token
+    if (deviceId) {
+        this.fcmTokens = this.fcmTokens.filter((t) => t.deviceId !== deviceId);
         this.fcmTokens.push({
             token,
             device,
-            browser,
+            browser: browser || null,
+            deviceId,
+            appVersion: appVersion || null,
+            createdAt: new Date(),
+            lastUsed: new Date(),
+        });
+        return await this.save();
+    }
+
+    const existingTokenIndex = this.fcmTokens.findIndex((t) => t.token === token);
+    if (existingTokenIndex !== -1) {
+        this.fcmTokens[existingTokenIndex].lastUsed = new Date();
+        if (browser) this.fcmTokens[existingTokenIndex].browser = browser;
+        if (appVersion) this.fcmTokens[existingTokenIndex].appVersion = appVersion;
+    } else {
+        this.fcmTokens.push({
+            token,
+            device,
+            browser: browser || null,
+            deviceId: null,
+            appVersion: appVersion || null,
             createdAt: new Date(),
             lastUsed: new Date(),
         });
     }
-
     return await this.save();
 };
 

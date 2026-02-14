@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth';
+import { errorResponse } from '@/lib/apiResponse';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -15,43 +16,22 @@ export async function GET(request) {
         const user = await verifyAuth(request);
 
         if (!user) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Not authenticated',
-                },
-                { status: 401 }
-            );
+            return errorResponse('Not authenticated', 401);
         }
 
-        // Get format from query params
         const { searchParams } = new URL(request.url);
         const format = searchParams.get('format') || 'json';
 
         if (!['json', 'csv'].includes(format)) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Invalid format. Use json or csv',
-                },
-                { status: 400 }
-            );
+            return errorResponse('Invalid format. Use json or csv', 400);
         }
 
-        // Connect to database
         await connectDB();
 
-        // Fetch user from database (exclude password)
         const fullUser = await User.findById(user._id);
 
         if (!fullUser) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'User not found',
-                },
-                { status: 404 }
-            );
+            return errorResponse('User not found', 404);
         }
 
         // Log export request
@@ -147,14 +127,9 @@ export async function GET(request) {
         }
     } catch (error) {
         console.error('Data export error:', error);
-
-        return NextResponse.json(
-            {
-                success: false,
-                message: 'Failed to export data',
-                error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-            },
-            { status: 500 }
+        return errorResponse(
+            process.env.NODE_ENV === 'development' ? error.message : 'Failed to export data',
+            500
         );
     }
 }

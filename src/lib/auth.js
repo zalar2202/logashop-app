@@ -1,8 +1,9 @@
 import { cookies } from 'next/headers';
-import { verifyToken, extractTokenFromHeader, generateToken } from '@/lib/jwt';
+import { verifyToken, extractTokenFromHeader, generateToken, getAccessTokenExpiry } from '@/lib/jwt';
 import { setAuthToken, clearAuthToken } from '@/lib/cookies';
 import { COOKIE_NAMES } from '@/constants/config';
 import User from '@/models/User';
+import RefreshToken from '@/models/RefreshToken';
 
 /**
  * Extract JWT from request: prefer Authorization Bearer, then cookie.
@@ -47,15 +48,33 @@ export const verifyAuth = getAuthenticatedUser;
 /**
  * Sign an access token for a user (for login / refresh).
  * @param {Object} user - User doc with _id, email, role
+ * @param {string} [expiresIn] - JWT expiry (e.g. "30m"). Omit for default long-lived (web).
  * @returns {string} JWT
  */
-export function signAccessToken(user) {
-    return generateToken({
-        userId: user._id.toString(),
-        email: user.email,
-        role: user.role,
-    });
+export function signAccessToken(user, expiresIn = null) {
+    return generateToken(
+        {
+            userId: user._id.toString(),
+            email: user.email,
+            role: user.role,
+        },
+        expiresIn ?? undefined
+    );
 }
+
+/**
+ * Create a refresh token for user (mobile). Returns opaque token string.
+ * @param {Object} user - User doc with _id
+ * @param {string} [deviceId] - Optional device id for rotation
+ * @returns {Promise<string>} Refresh token (opaque)
+ */
+export async function createRefreshToken(user, deviceId = null) {
+    const { token } = await RefreshToken.createForUser(user._id, deviceId);
+    return token;
+}
+
+/** Short expiry for access token when using refresh (mobile). */
+export { getAccessTokenExpiry };
 
 /**
  * Set auth token in httpOnly cookie (uses Next.js cookies() for current response).

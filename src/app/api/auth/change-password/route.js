@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth';
+import { successResponse, errorResponse } from '@/lib/apiResponse';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -15,134 +15,63 @@ export async function PUT(request) {
         const user = await verifyAuth(request);
 
         if (!user) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Not authenticated',
-                },
-                { status: 401 }
-            );
+            return errorResponse('Not authenticated', 401);
         }
 
-        // Parse request body
         const { currentPassword, newPassword } = await request.json();
 
-        // Validate required fields
         if (!currentPassword || !newPassword) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Current password and new password are required',
-                },
-                { status: 400 }
-            );
+            return errorResponse('Current password and new password are required', 400);
         }
 
-        // Validate new password strength
         if (newPassword.length < 8) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'New password must be at least 8 characters long',
-                },
-                { status: 400 }
-            );
+            return errorResponse('New password must be at least 8 characters long', 400);
         }
 
-        // Check password complexity
         const hasUpperCase = /[A-Z]/.test(newPassword);
         const hasLowerCase = /[a-z]/.test(newPassword);
         const hasNumber = /[0-9]/.test(newPassword);
         const hasSpecialChar = /[@$!%*?&#]/.test(newPassword);
-
         if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Password must contain uppercase, lowercase, number, and special character',
-                },
-                { status: 400 }
+            return errorResponse(
+                'Password must contain uppercase, lowercase, number, and special character',
+                400
             );
         }
 
-        // Check if new password is same as current
         if (currentPassword === newPassword) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'New password must be different from current password',
-                },
-                { status: 400 }
-            );
+            return errorResponse('New password must be different from current password', 400);
         }
 
-        // Connect to database
         await connectDB();
 
-        // Fetch user with password field
         const userWithPassword = await User.findByEmailWithPassword(user.email);
 
         if (!userWithPassword) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'User not found',
-                },
-                { status: 404 }
-            );
+            return errorResponse('User not found', 404);
         }
 
-        // Check if account is active
         if (userWithPassword.status === 'suspended' || userWithPassword.accountDeletedAt) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Account is suspended or deleted',
-                },
-                { status: 403 }
-            );
+            return errorResponse('Account is suspended or deleted', 403);
         }
 
-        // Verify current password
         const isPasswordValid = await userWithPassword.comparePassword(currentPassword);
-
         if (!isPasswordValid) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Current password is incorrect',
-                },
-                { status: 401 }
-            );
+            return errorResponse('Current password is incorrect', 401);
         }
 
-        // Update password (will be hashed by pre-save middleware)
         userWithPassword.password = newPassword;
         userWithPassword.lastPasswordChange = new Date();
-
-        // Save user (triggers password hashing middleware)
         await userWithPassword.save();
 
-        // Log security event (optional - for future audit trail)
         console.log(`Password changed for user: ${userWithPassword.email} at ${new Date().toISOString()}`);
 
-        return NextResponse.json(
-            {
-                success: true,
-                message: 'Password changed successfully',
-            },
-            { status: 200 }
-        );
+        return successResponse({ message: 'Password changed successfully' });
     } catch (error) {
         console.error('Password change error:', error);
-
-        return NextResponse.json(
-            {
-                success: false,
-                message: 'Failed to change password',
-                error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-            },
-            { status: 500 }
+        return errorResponse(
+            process.env.NODE_ENV === 'development' ? error.message : 'Failed to change password',
+            500
         );
     }
 }

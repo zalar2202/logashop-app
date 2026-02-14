@@ -1,6 +1,6 @@
-# Mobile API — Phase 1
+# Mobile API — Phase 1 & 2
 
-This document describes how the LogaShop API supports mobile clients (e.g. React Native / Expo) for Phase 1.
+This document describes how the LogaShop API supports mobile clients (e.g. React Native / Expo).
 
 ## CORS
 
@@ -17,7 +17,8 @@ Allowed request headers: `Content-Type`, `Authorization`, `X-Client`, `X-Cart-Se
 
 ## Auth
 
-- **Login:** `POST /api/auth/login` with body `{ email, password }`. Send header **X-Client: mobile** (or query `?client=mobile`) to receive **accessToken** in the JSON response. Store it (e.g. SecureStore) and send it as **Authorization: Bearer &lt;accessToken&gt;** on protected requests. Web continues to use the httpOnly cookie only (no token in body).
+- **Login:** `POST /api/auth/login` with body `{ email, password }`. Send header **X-Client: mobile** (or query `?client=mobile`) to receive in the response **data**: **accessToken** (short-lived), **refreshToken** (opaque), and **expiresIn**. Store both tokens (e.g. SecureStore) and use **Authorization: Bearer &lt;accessToken&gt;** on protected requests. Web continues to use the httpOnly cookie only (no tokens in body).
+- **Refresh:** When the access token expires (401), call **POST /api/auth/refresh** with body `{ refreshToken }`. The response **data** contains a new **accessToken**, **refreshToken**, and **expiresIn**. Replace the stored refresh token with the new one (rotation). Rate limited per IP.
 - **Protected routes:** All auth and protected APIs accept either the httpOnly cookie or **Authorization: Bearer &lt;token&gt;**; Bearer takes precedence when both are present.
 
 ## Cart (guest without cookies)
@@ -32,4 +33,12 @@ Allowed request headers: `Content-Type`, `Authorization`, `X-Client`, `X-Cart-Se
 
 ## Stripe (mobile)
 
-Use **POST /api/payments/create-intent** with body `{ orderId }` and **Authorization: Bearer &lt;accessToken&gt;** (or cookie). The response includes **clientSecret** and **id**. Use these with the Stripe native SDK (e.g. **PaymentSheet** on iOS/Android) to complete payment.
+Use **POST /api/payments/create-intent** with body `{ orderId }` and **Authorization: Bearer &lt;accessToken&gt;** (or cookie). The response **data** includes **clientSecret** and **id**. Use these with the Stripe native SDK (e.g. **PaymentSheet** on iOS/Android) to complete payment.
+
+## Response envelope
+
+API responses use a standard shape: **Success:** `{ success: true, data: { ... } }`. **Error:** `{ success: false, error: "message" }`. Always read payload from **data** and errors from **error**.
+
+## Device registration (push notifications)
+
+**POST /api/devices/register** — Register an FCM (or similar) device token for push notifications. Requires authentication (Bearer or cookie). Body: **deviceToken** (required), **platform** (required: `ios` | `android` | `web`), **deviceId** (optional), **appVersion** (optional). When **deviceId** is provided, any existing token for that device is replaced (one token per device per user). Response: `{ success: true, data: { registered: true } }`.

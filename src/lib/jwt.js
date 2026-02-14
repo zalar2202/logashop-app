@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+const JWT_ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN || "30m";
 
 // Module level validation is removed to prevent build-time crashes.
 // Validation is performed inside each function that requires the secret.
@@ -12,12 +13,14 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
  * @param {string} payload.userId - User ID
  * @param {string} payload.email - User email
  * @param {string} payload.role - User role
+ * @param {string} [expiresIn] - Override expiry (e.g. "30m", "7d"). Default JWT_EXPIRES_IN.
  * @returns {string} JWT token
  */
-export function generateToken(payload) {
+export function generateToken(payload, expiresIn = null) {
     if (!JWT_SECRET) {
         throw new Error("JWT_SECRET is missing. Please define it in environment variables.");
     }
+    const expiry = expiresIn ?? JWT_EXPIRES_IN;
     try {
         const token = jwt.sign(
             {
@@ -27,7 +30,7 @@ export function generateToken(payload) {
             },
             JWT_SECRET,
             {
-                expiresIn: JWT_EXPIRES_IN,
+                expiresIn: expiry,
                 issuer: "logashop-admin-panel",
             }
         );
@@ -37,6 +40,11 @@ export function generateToken(payload) {
         console.error("Error generating JWT token:", error);
         throw new Error("Token generation failed");
     }
+}
+
+/** Default expiry for access tokens (short-lived when using refresh). */
+export function getAccessTokenExpiry() {
+    return JWT_ACCESS_EXPIRES_IN;
 }
 
 /**

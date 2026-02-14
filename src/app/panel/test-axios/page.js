@@ -28,7 +28,8 @@ export default function TestAxiosPage() {
         setAuthChecking(true);
         try {
             const response = await api.get("/api/auth/check");
-            setIsAuthenticated(response.data.authenticated);
+            const payload = response.data?.data ?? response.data;
+            setIsAuthenticated(!!payload?.authenticated);
         } catch (error) {
             setIsAuthenticated(false);
         } finally {

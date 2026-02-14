@@ -47,14 +47,14 @@ export default function LoginPage() {
             if (result.success) {
                 toast.success("Login successful! Welcome back.");
 
-                // Check if there's a redirect path
                 const redirectPath = sessionStorage.getItem("redirect_after_login");
-
                 if (redirectPath) {
                     sessionStorage.removeItem("redirect_after_login");
                     router.push(redirectPath);
                 } else {
-                    router.push("/panel/dashboard");
+                    const isAdminOrManager =
+                        result.user?.role === "admin" || result.user?.role === "manager";
+                    router.push(isAdminOrManager ? "/panel/dashboard" : "/account");
                 }
             } else {
                 setError(result.message || "Login failed. Please try again.");

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import { verifyAuth } from "@/lib/auth";
+import { successResponse, errorResponse } from "@/lib/apiResponse";
 import dbConnect from "@/lib/mongodb";
 import Cart from "@/models/Cart";
 import Product from "@/models/Product";
@@ -64,10 +65,7 @@ export async function POST(req) {
         } = body;
 
         if (isMobileClient(req) && !user) {
-            return NextResponse.json(
-                { success: false, error: "Login required for checkout on mobile" },
-                { status: 401 }
-            );
+            return errorResponse("Login required for checkout on mobile", 401);
         }
 
         const sessionId = await resolveCartSessionId(req, bodySessionId);
@@ -80,49 +78,31 @@ export async function POST(req) {
         }
 
         if (!cart || cart.items.length === 0) {
-            return NextResponse.json({ success: false, error: "Cart is empty" }, { status: 400 });
+            return errorResponse("Cart is empty", 400);
         }
 
-        // Validate required fields
         if (!shippingAddress) {
-            return NextResponse.json(
-                { success: false, error: "Shipping address is required" },
-                { status: 400 }
-            );
+            return errorResponse("Shipping address is required", 400);
         }
 
         const requiredFields = ["firstName", "lastName", "address1", "city", "state", "zipCode"];
         for (const field of requiredFields) {
             if (!shippingAddress[field]?.trim()) {
-                return NextResponse.json(
-                    { success: false, error: `Shipping ${field} is required` },
-                    { status: 400 }
-                );
+                return errorResponse(`Shipping ${field} is required`, 400);
             }
         }
 
-        // Guest must provide email
         if (!user && !guestEmail?.trim()) {
-            return NextResponse.json(
-                { success: false, error: "Email is required for guest checkout" },
-                { status: 400 }
-            );
+            return errorResponse("Email is required for guest checkout", 400);
         }
 
-        // Validate billing address if different
         if (!billingSameAsShipping) {
             if (!billingAddress) {
-                return NextResponse.json(
-                    { success: false, error: "Billing address is required" },
-                    { status: 400 }
-                );
+                return errorResponse("Billing address is required", 400);
             }
             for (const field of requiredFields) {
                 if (!billingAddress[field]?.trim()) {
-                    return NextResponse.json(
-                        { success: false, error: `Billing ${field} is required` },
-                        { status: 400 }
-                    );
+                    return errorResponse(`Billing ${field} is required`, 400);
                 }
             }
         }
@@ -181,17 +161,11 @@ export async function POST(req) {
         }
 
         if (stockErrors.length > 0) {
-            return NextResponse.json(
-                { success: false, error: stockErrors.join("; ") },
-                { status: 400 }
-            );
+            return errorResponse(stockErrors.join("; "), 400);
         }
 
         if (orderItems.length === 0) {
-            return NextResponse.json(
-                { success: false, error: "No valid items in cart" },
-                { status: 400 }
-            );
+            return errorResponse("No valid items in cart", 400);
         }
 
         // Calculate totals
@@ -491,18 +465,15 @@ export async function POST(req) {
             console.error("Order confirmation notification failed:", err)
         );
 
-        return NextResponse.json({
-            success: true,
-            data: {
-                orderId: order._id,
-                orderNumber: order.orderNumber,
-                trackingCode: order.trackingCode,
-                total: order.total,
-                status: order.status,
-            },
+        return successResponse({
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            trackingCode: order.trackingCode,
+            total: order.total,
+            status: order.status,
         });
     } catch (error) {
         console.error("POST /api/checkout error:", error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return errorResponse(error.message, 500);
     }
 }

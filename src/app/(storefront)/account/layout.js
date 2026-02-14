@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { User, MapPin, Package, Settings, LogOut, ChevronRight, Bell } from "lucide-react";
+import { User, MapPin, Package, Settings, LogOut, ChevronRight, Bell, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const ACCOUNT_NAV = [
@@ -72,7 +72,6 @@ export default function AccountLayout({ children }) {
                                 const isActive = item.exact
                                     ? pathname === item.href
                                     : pathname.startsWith(item.href);
-
                                 return (
                                     <Link
                                         key={item.href}
@@ -92,6 +91,16 @@ export default function AccountLayout({ children }) {
                                     </Link>
                                 );
                             })}
+                            {(user?.role === "admin" || user?.role === "manager") && (
+                                <Link
+                                    href="/panel/dashboard"
+                                    className="flex items-center gap-3 px-4 py-3.5 text-sm font-medium border-b border-[var(--color-border)] transition text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5"
+                                >
+                                    <LayoutDashboard size={18} />
+                                    <span className="flex-1">Admin Panel</span>
+                                    <ChevronRight size={16} className="opacity-30" />
+                                </Link>
+                            )}
                             <button
                                 onClick={handleLogout}
                                 className="flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-red-500 hover:bg-red-50 transition w-full"

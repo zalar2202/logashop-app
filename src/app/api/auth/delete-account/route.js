@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { verifyAuth, clearAuthCookie } from '@/lib/auth';
+import { successResponse, errorResponse } from '@/lib/apiResponse';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { deleteFile } from '@/lib/storage';
@@ -17,91 +17,44 @@ export async function DELETE(request) {
         const user = await verifyAuth(request);
 
         if (!user) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Not authenticated',
-                },
-                { status: 401 }
-            );
+            return errorResponse('Not authenticated', 401);
         }
 
-        // Parse request body
         const { password, confirmation } = await request.json();
 
-        // Validate required fields
         if (!password) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Password is required to delete account',
-                },
-                { status: 400 }
-            );
+            return errorResponse('Password is required to delete account', 400);
         }
 
         if (confirmation !== 'DELETE') {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'You must type DELETE exactly to confirm account deletion',
-                },
-                { status: 400 }
-            );
+            return errorResponse('You must type DELETE exactly to confirm account deletion', 400);
         }
 
-        // Connect to database
         await connectDB();
 
-        // Fetch user with password field
         const userWithPassword = await User.findByEmailWithPassword(user.email);
 
         if (!userWithPassword) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'User not found',
-                },
-                { status: 404 }
-            );
+            return errorResponse('User not found', 404);
         }
 
-        // Check if account is already deleted
         if (userWithPassword.accountDeletedAt) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Account is already deleted',
-                },
-                { status: 400 }
-            );
+            return errorResponse('Account is already deleted', 400);
         }
 
-        // Prevent admin from deleting their own account if they're the only admin
         if (userWithPassword.role === 'admin') {
             const adminCount = await User.countDocuments({ role: 'admin', accountDeletedAt: null });
             if (adminCount <= 1) {
-                return NextResponse.json(
-                    {
-                        success: false,
-                        message: 'Cannot delete the last admin account. Please create another admin first.',
-                    },
-                    { status: 403 }
+                return errorResponse(
+                    'Cannot delete the last admin account. Please create another admin first.',
+                    403
                 );
             }
         }
 
-        // Verify password
         const isPasswordValid = await userWithPassword.comparePassword(password);
-
         if (!isPasswordValid) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: 'Password is incorrect',
-                },
-                { status: 401 }
-            );
+            return errorResponse('Password is incorrect', 401);
         }
 
         // Store user info for logging before deletion
@@ -134,29 +87,16 @@ export async function DELETE(request) {
         // TODO: Send notification to admin about account deletion (if implemented)
         // TODO: Send confirmation email to user (if email service is set up)
 
-        // Clear auth token (log out user)
-        const response = NextResponse.json(
-            {
-                success: true,
-                message: 'Account deleted permanently. We\'re sorry to see you go.',
-            },
-            { status: 200 }
-        );
-
-        // Delete auth cookie
         await clearAuthCookie();
 
-        return response;
+        return successResponse({
+            message: "Account deleted permanently. We're sorry to see you go.",
+        });
     } catch (error) {
         console.error('Account deletion error:', error);
-
-        return NextResponse.json(
-            {
-                success: false,
-                message: 'Failed to delete account',
-                error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-            },
-            { status: 500 }
+        return errorResponse(
+            process.env.NODE_ENV === 'development' ? error.message : 'Failed to delete account',
+            500
         );
     }
 }

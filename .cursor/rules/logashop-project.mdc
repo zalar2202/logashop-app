@@ -1,0 +1,44 @@
+---
+description: LogaShop e-commerce monorepo — project context, mobile focus, and API/data conventions
+alwaysApply: true
+---
+
+# LogaShop Project Rules
+
+## Project overview
+
+- **Product:** Full-stack e-commerce (single-store, multi-vendor ready). English, USD, Stripe. Physical + digital products, guest + registered checkout.
+- **Monorepo:** `apps/web` (Next.js, JS, largely complete) and `apps/mobile` (Expo, **TypeScript**, in active development). Primary focus is **mobile**.
+- **Backend:** Shared Next.js API in `apps/web`. Mobile consumes it via HTTP with Bearer tokens; web uses httpOnly cookies.
+- **Docs:** `apps/web/docs/` is the source of truth (README, DATA_MODELS, ROADMAP, mobile-api, mobile-readiness spec, monorepo setup). Add `apps/mobile/docs/` as the mobile app grows.
+
+## When working in `apps/mobile`
+
+- **Language:** TypeScript only. Use strict mode (already in `tsconfig.json`).
+- **Runtime:** Expo (React Native). Use Expo APIs and `expo-*` packages; avoid relying on web-only or Node-only APIs in app code.
+- **API base URL:** From `EXPO_PUBLIC_API_BASE_URL` in `.env`. Use `getApiBaseUrl()`, `getApiHeaders(accessToken)`, and `getApiHeadersWithCart(accessToken, cartSessionId)` from `src/api.ts`. Do not hardcode backend URLs.
+- **Client identification:** All API requests must send **X-Client: mobile** (already in `getApiHeaders`) so the backend returns tokens and applies mobile behavior (e.g. login returns `accessToken`/`refreshToken` in JSON).
+- **Auth:** Store access/refresh tokens in secure storage (e.g. Expo SecureStore). Use **Authorization: Bearer &lt;accessToken&gt;** for protected routes. On 401, use **POST /api/auth/refresh** with `refreshToken` and rotate stored tokens. See `apps/web/docs/mobile-api.md`.
+- **Cart (guest):** Use **X-Cart-Session** (or body `sessionId`) for guest cart; persist `data.sessionId` from cart/checkout responses and send it on subsequent requests.
+- **Checkout:** Mobile checkout requires login; backend returns 401 "Login required for checkout on mobile" if unauthenticated. Merge guest cart into user cart after login, then call checkout.
+- **Payments:** Use **POST /api/payments/create-intent** with `{ orderId }`; use returned `clientSecret` (and optional `id`) with Stripe native SDK (e.g. PaymentSheet).
+- **Response shape:** Success: `{ success: true, data: { ... } }`. Error: `{ success: false, error: "message" }`. Read payload from `data`, errors from `error`; do not assume other shapes.
+
+## Data and API alignment (both apps)
+
+- **Prices:** Stored and transmitted in **cents** (integer). e.g. $19.99 → 1999.
+- **Models:** Follow `apps/web/docs/DATA_MODELS.md` for entities (User, Product, ProductVariant, Order, Cart, Category, ShippingZone, Coupon, Review, Wishlist, DigitalDelivery, etc.). Product images are embedded in Product as `images[]`; no separate ProductImage collection. Order payment fields live on Order (`paymentIntentId`, `paidAt`, `paymentStatus`, `paymentMethod`).
+- **HTTP status:** Prefer correct status codes (200, 201, 400, 401, 403, 404, 429, 500); avoid 200 with embedded error payloads for real errors.
+
+## Conventions to follow
+
+- **Do not break the web app.** Backend must support both cookie (web) and Bearer (mobile); mobile-specific behavior is gated by `X-Client: mobile` (or `?client=mobile`).
+- **Cart merge:** On mobile login, merge guest cart into user cart (same item = sum quantities, respect stock); then use the canonical cart from the API.
+- **New mobile features:** Prefer reusing existing API routes and response shapes from web; extend with new endpoints only when necessary. Document mobile-specific behavior in `apps/web/docs/mobile-api.md` or in `apps/mobile/docs/` when added.
+- **Env:** Mobile uses `EXPO_PUBLIC_*` for client-visible env vars. Never commit `.env`; use `.env.example` as template.
+
+## Quick reference
+
+- Web dev: `npm run dev:web` (port 7777). Mobile dev: `npm run dev:mobile`; use LAN IP in `EXPO_PUBLIC_API_BASE_URL` for real device.
+- Lint: `npm run lint:mobile` / `lint:web` / `lint:all`. Build web: `npm run build:web`.
+- Deep reference: `apps/web/docs/README.md`, `DATA_MODELS.md`, `ROADMAP.md`, `mobile-api.md`, `logatech-shop-mobile-readiness-spec.refined.md`, `logashop-expo-monorepo-dev-setup.md`.

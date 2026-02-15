@@ -3,8 +3,10 @@ FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat python3 make g++ build-base
 WORKDIR /app
 
-# Copy package files
+# Copy root package files
 COPY package.json package-lock.json ./
+# Copy workspace package files
+COPY apps/web/package.json ./apps/web/
 RUN npm install
 
 # Stage 2: Builder
@@ -55,8 +57,8 @@ ENV JWT_SECRET=$JWT_SECRET
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Build the application
-RUN npm run build
+# Build the specific workspace
+RUN npm run build --workspace=apps/web
 
 # Stage 3: Runner
 FROM node:20-alpine AS runner
@@ -70,12 +72,13 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy necessary files from builder
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/apps/web/public ./public
+COPY --from=builder /app/apps/web/package.json ./package.json
 
 # Copy built application
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# standalone output in monorepos is relative to the root
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 
 # Create storage directory with proper permissions
 RUN mkdir -p /app/storage && chown -R nextjs:nodejs /app/storage
@@ -87,4 +90,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+CMD ["node", "apps/web/server.js"]

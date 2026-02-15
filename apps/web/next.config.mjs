@@ -8,9 +8,9 @@ const __dirname = path.dirname(__filename);
 const nextConfig = {
     /* config options here */
     output: "standalone",
+    outputFileTracingRoot: path.join(__dirname, "../../"),
     reactCompiler: true,
     experimental: {
-        outputFileTracingRoot: path.join(__dirname, "../../"),
     },
     sassOptions: {
         silenceDeprecations: ["import"],

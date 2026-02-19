@@ -1,26 +1,15 @@
-# Stage 1: Dependencies
-FROM node:20-slim AS deps
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# Stage 1: Builder
+# Using full node:20 image for maximum capability during native module building
+FROM node:20 AS builder
 
 WORKDIR /app
 
-# Copy root package files
-COPY package.json package-lock.json ./
-# Copy workspace package files
-COPY apps/web/package.json ./apps/web/
-COPY apps/mobile/package.json ./apps/mobile/
-RUN npm install
-
-# Stage 2: Builder
-FROM node:20-slim AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy everything for a clean state build in one stage
 COPY . .
+
+# Install all dependencies precisely for the current platform
+# This ensures native binaries (like lightningcss) are correctly downloaded/compiled
+RUN npm install
 
 # Environment variables for build time
 ARG NEXT_PUBLIC_APP_URL
@@ -60,42 +49,40 @@ ENV STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY
 ENV MONGO_URI=$MONGO_URI
 ENV JWT_SECRET=$JWT_SECRET
 
-# Set environment to production for build
+# Set environment to production
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build the specific workspace
 RUN npm run build --workspace=apps/web
 
-# Stage 3: Runner
+# Stage 2: Runner
 FROM node:20-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create a non-root user
+# Standard Debian/Slim commands for user management
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 nextjs
 
-# Copy necessary files from builder
+# Copy necessary files
 COPY --from=builder /app/apps/web/public ./public
 COPY --from=builder /app/apps/web/package.json ./package.json
 COPY --from=builder /app/apps/web/src/scripts ./apps/web/src/scripts
 COPY --from=builder /app/apps/web/src/models ./apps/web/src/models
 
-# Copy built application
 # standalone output in monorepos is relative to the root
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 
-# Create storage directory with proper permissions
+# Permissions
 RUN mkdir -p /app/storage && chown -R nextjs:nodejs /app/storage
 
 USER nextjs
 
 EXPOSE 3000
-
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 

@@ -1,6 +1,12 @@
 # Stage 1: Dependencies
-FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat python3 make g++ build-base libstdc++ gcompat
+FROM node:20-slim AS deps
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy root package files
@@ -11,8 +17,7 @@ COPY apps/mobile/package.json ./apps/mobile/
 RUN npm install
 
 # Stage 2: Builder
-FROM node:20-alpine AS builder
-RUN apk add --no-cache libc6-compat python3 make g++ build-base libstdc++ gcompat
+FROM node:20-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -63,16 +68,15 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build --workspace=apps/web
 
 # Stage 3: Runner
-FROM node:20-alpine AS runner
-RUN apk add --no-cache libc6-compat libstdc++ gcompat
+FROM node:20-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create a non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs
+RUN useradd --system --uid 1001 nextjs
 
 # Copy necessary files from builder
 COPY --from=builder /app/apps/web/public ./public

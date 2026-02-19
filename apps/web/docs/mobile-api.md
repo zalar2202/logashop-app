@@ -13,7 +13,7 @@ ALLOWED_ORIGINS=https://yourapp.com
 ALLOWED_ORIGINS=https://yourapp.com,https://admin.yourapp.com
 ```
 
-Allowed request headers: `Content-Type`, `Authorization`, `X-Client`, `X-Cart-Session`.
+Allowed request headers: `Content-Type`, `Authorization`, `X-Client`, `X-Cart-Session`, `X-Wishlist-Session`.
 
 ## Auth
 
@@ -39,6 +39,22 @@ Use **POST /api/payments/create-intent** with body `{ orderId }` and **Authoriza
 
 API responses use a standard shape: **Success:** `{ success: true, data: { ... } }`. **Error:** `{ success: false, error: "message" }`. Always read payload from **data** and errors from **error**.
 
+## Wishlist
+
+- **Endpoints:** `GET /api/wishlist` and `POST /api/wishlist` (body: `{ productId, sessionId? }`) work for mobile. Send **X-Wishlist-Session** header for guest wishlist; backend returns `sessionId` in the response when creating a new guest wishlist (mobile only). On login, send both Bearer and **X-Wishlist-Session**; backend merges guest wishlist into user wishlist.
+
+## Digital downloads
+
+- **GET /api/account/downloads** — List user's digital deliveries. Requires auth (Bearer). Response: `{ success, downloads: [...] }` with `downloadToken`, `fileName`, `productId`, `orderId`, `downloadCount`, `maxDownloads`, `expiresAt`, `status`, `isValid`.
+- **GET /api/download/[token]** — Download file by token. No auth; token-only. Returns file with `Content-Disposition: attachment`. Mobile: download to cache and use `expo-sharing` to share/save, or `Linking.openURL` as fallback.
+
 ## Device registration (push notifications)
 
 **POST /api/devices/register** — Register an FCM (or similar) device token for push notifications. Requires authentication (Bearer or cookie). Body: **deviceToken** (required), **platform** (required: `ios` | `android` | `web`), **deviceId** (optional), **appVersion** (optional). When **deviceId** is provided, any existing token for that device is replaced (one token per device per user). Response: `{ success: true, data: { registered: true } }`.
+
+## Notifications (in-app)
+
+- **GET /api/notifications** — List user's notifications. Requires auth (Bearer). Query: `page`, `limit`, `read` (optional: `true`|`false`). Response: `{ success: true, data: [...], pagination: { page, limit, total, pages } }`.
+- **GET /api/notifications/count** — Unread count. Response: `{ success: true, data: { count } }`.
+- **PATCH /api/notifications/[id]** — Mark read/unread. Body: `{ read: boolean }`. Requires auth.
+- **PATCH /api/notifications/mark-all-read** — Mark all user's notifications as read. Requires auth.

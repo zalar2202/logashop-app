@@ -1,26 +1,24 @@
 {
   "name": "logashop",
   "private": true,
-  "workspaces": [
-    "apps/web",
-    "apps/mobile"
-  ],
+  "workspaces": ["apps/web", "apps/mobile"],
   "scripts": {
     "dev:web": "npm --workspace apps/web run dev",
     "dev:mobile": "npm --workspace apps/mobile run start",
     "dev:all": "concurrently -n WEB,MOBILE -c auto \"npm run dev:web\" \"npm run dev:mobile\"",
-
     "install:all": "npm install",
-
     "lint:web": "npm --workspace apps/web run lint",
     "lint:mobile": "npm --workspace apps/mobile run lint",
     "lint:all": "npm run lint:web && npm run lint:mobile",
-
-    "build:web": "npm --workspace apps/web run build",
-
-    "start:web": "npm --workspace apps/web run start"
+    "build:web": "npm run build:web",
+    "start:web": "npm run start:web"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
+  },
+  "overrides": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5"
   }
 }

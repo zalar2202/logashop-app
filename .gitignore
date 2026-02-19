@@ -28,6 +28,8 @@ apps/web/build
 .DS_Store
 *.pem
 
+# .cursor/ is intentionally tracked (shared rules for Cursor IDE)
+
 # debug
 npm-debug.log*
 yarn-debug.log*

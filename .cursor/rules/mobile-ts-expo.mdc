@@ -1,0 +1,13 @@
+---
+description: TypeScript and Expo patterns for apps/mobile
+globs: apps/mobile/**/*.ts,apps/mobile/**/*.tsx
+alwaysApply: false
+---
+
+# Mobile app (TypeScript + Expo)
+
+- Use **functional components** and hooks; avoid class components.
+- Prefer **typed API responses** (interfaces/types) aligned with `apps/web/docs/DATA_MODELS.md` and the API envelope `{ success, data?, error? }`.
+- Use `src/api.ts` for base URL and headers; do not duplicate `X-Client: mobile` or Bearer logic elsewhere.
+- Use **StyleSheet** (or a consistent styling approach) for React Native styles; keep layout and theme consistent as the app grows.
+- For new screens or features, check existing web API routes and docs first; mirror naming and payloads where it makes sense.

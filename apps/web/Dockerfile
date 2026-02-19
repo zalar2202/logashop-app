@@ -71,17 +71,23 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 nextjs
 
-# Copy necessary assets from builder
-COPY --from=builder /app/apps/web/public ./public
-COPY --from=builder /app/apps/web/package.json ./package.json
-COPY --from=builder /app/apps/web/src/scripts ./apps/web/src/scripts
-COPY --from=builder /app/apps/web/src/models ./apps/web/src/models
-
-# Standalone output in monorepos is relative to the root
+# 1. Copy standalone output from Next.js build
+# In a monorepo, standalone contains the minimal node_modules and app structure
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
-# Permissions for storage
+# 2. Copy administrative scripts and models explicitly
+# These are needed for database seeding and are not always traced by Next.js standalone
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src/scripts ./apps/web/src/scripts
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src/models ./apps/web/src/models
+
+# 3. Ensure the package.json with "type": "module" is present
+# We overwrite the root package.json and the app package.json to ensure Node.js 
+# identifies scripts as ESM when run from the terminal.
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/package.json ./package.json
+
+# Permissions for storage volume
 RUN mkdir -p /app/storage && chown -R nextjs:nodejs /app/storage
 
 USER nextjs
@@ -90,4 +96,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+#ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["node", "apps/web/server.js"]

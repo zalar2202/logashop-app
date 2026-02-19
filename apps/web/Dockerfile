@@ -1,16 +1,18 @@
 # Stage 1: Dependencies
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat python3 make g++ build-base
+RUN apk add --no-cache libc6-compat python3 make g++ build-base libstdc++ gcompat
 WORKDIR /app
 
 # Copy root package files
 COPY package.json package-lock.json ./
 # Copy workspace package files
 COPY apps/web/package.json ./apps/web/
-RUN npm install
+COPY apps/mobile/package.json ./apps/mobile/
+RUN npm ci
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
+RUN apk add --no-cache libc6-compat python3 make g++ build-base libstdc++ gcompat
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -62,6 +64,7 @@ RUN npm run build --workspace=apps/web
 
 # Stage 3: Runner
 FROM node:20-alpine AS runner
+RUN apk add --no-cache libc6-compat libstdc++ gcompat
 WORKDIR /app
 
 ENV NODE_ENV=production

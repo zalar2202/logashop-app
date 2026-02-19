@@ -10,8 +10,15 @@
  *   3. International — standard, express (international rates)
  */
 
-import "dotenv/config";
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+// Load environment variables
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, "../../.env.local") });
 
 const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
 

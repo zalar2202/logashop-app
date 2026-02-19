@@ -8,7 +8,7 @@ COPY package.json package-lock.json ./
 # Copy workspace package files
 COPY apps/web/package.json ./apps/web/
 COPY apps/mobile/package.json ./apps/mobile/
-RUN npm ci
+RUN npm install
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
@@ -77,6 +77,8 @@ RUN adduser --system --uid 1001 nextjs
 # Copy necessary files from builder
 COPY --from=builder /app/apps/web/public ./public
 COPY --from=builder /app/apps/web/package.json ./package.json
+COPY --from=builder /app/apps/web/src/scripts ./apps/web/src/scripts
+COPY --from=builder /app/apps/web/src/models ./apps/web/src/models
 
 # Copy built application
 # standalone output in monorepos is relative to the root

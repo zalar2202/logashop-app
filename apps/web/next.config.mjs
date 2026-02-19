@@ -17,10 +17,14 @@ const nextConfig = {
     },
     // CORS for /api when ALLOWED_ORIGINS is set (avoids middleware + standalone trace issue)
     async headers() {
-        const origins = (process.env.ALLOWED_ORIGINS || "")
+        let origins = (process.env.ALLOWED_ORIGINS || "")
             .split(",")
             .map((o) => o.trim())
             .filter(Boolean);
+        // Dev default: allow Expo web (localhost:8081) when ALLOWED_ORIGINS is unset
+        if (origins.length === 0 && process.env.NODE_ENV !== "production") {
+            origins = ["http://localhost:8081", "http://127.0.0.1:8081"];
+        }
         if (origins.length === 0) return [];
         return [
             {
@@ -36,7 +40,7 @@ const nextConfig = {
                     },
                     {
                         key: "Access-Control-Allow-Headers",
-                        value: "Content-Type, Authorization, X-Client, X-Cart-Session",
+                        value: "Content-Type, Authorization, X-Client, X-Cart-Session, X-Wishlist-Session",
                     },
                     { key: "Access-Control-Max-Age", value: "86400" },
                 ],

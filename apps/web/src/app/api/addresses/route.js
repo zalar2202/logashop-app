@@ -63,6 +63,70 @@ export async function POST(req) {
 }
 
 /**
+ * PUT /api/addresses — Update an address or set default
+ * Body: { addressId or id, ...fields } for full update
+ * Body: { addressId or id, isDefault: true } for set-default
+ */
+export async function PUT(req) {
+    try {
+        await dbConnect();
+        const user = await verifyAuth(req);
+        if (!user) {
+            return NextResponse.json(
+                { success: false, error: "Authentication required" },
+                { status: 401 }
+            );
+        }
+
+        const body = await req.json();
+        const addressId = body.addressId || body.id;
+
+        if (!addressId) {
+            return NextResponse.json(
+                { success: false, error: "Address ID required (addressId or id)" },
+                { status: 400 }
+            );
+        }
+
+        const address = await Address.findOne({
+            _id: addressId,
+            userId: user._id,
+        });
+
+        if (!address) {
+            return NextResponse.json(
+                { success: false, error: "Address not found" },
+                { status: 404 }
+            );
+        }
+
+        // Update fields (exclude addressId/id)
+        const allowedFields = [
+            "label", "firstName", "lastName", "company", "address1", "address2",
+            "city", "state", "zipCode", "country", "phone", "isDefault"
+        ];
+        for (const field of allowedFields) {
+            if (body[field] !== undefined) {
+                address[field] = typeof body[field] === "string" ? body[field].trim() : body[field];
+            }
+        }
+
+        await address.save();
+
+        return NextResponse.json({
+            success: true,
+            data: JSON.parse(JSON.stringify(address)),
+        });
+    } catch (error) {
+        console.error("PUT /api/addresses error:", error);
+        return NextResponse.json(
+            { success: false, error: error.message },
+            { status: 500 }
+        );
+    }
+}
+
+/**
  * DELETE /api/addresses?id=xxx — Delete an address
  */
 export async function DELETE(req) {
@@ -77,11 +141,11 @@ export async function DELETE(req) {
         }
 
         const { searchParams } = new URL(req.url);
-        const id = searchParams.get("id");
+        const id = searchParams.get("id") || searchParams.get("addressId");
 
         if (!id) {
             return NextResponse.json(
-                { success: false, error: "Address ID required" },
+                { success: false, error: "Address ID required (id or addressId)" },
                 { status: 400 }
             );
         }

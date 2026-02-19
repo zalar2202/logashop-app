@@ -12,11 +12,13 @@ export async function GET(req, { params }) {
     try {
         await dbConnect();
 
+        const { id } = await params;
+
         // Find by ID or Slug?
         // Admin usually uses ID, public uses Slug. We can support both if needed,
         // but for this file path [id], let's assume ObjectId.
 
-        const product = await Product.findById(params.id).populate(
+        const product = await Product.findById(id).populate(
             "categoryId",
             "name slug ancestors"
         );
@@ -42,6 +44,8 @@ export async function PUT(req, { params }) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const { id } = await params;
+
         await dbConnect();
         const body = await req.json();
 
@@ -50,12 +54,12 @@ export async function PUT(req, { params }) {
 
         // Check SKU uniqueness if changed
         if (body.sku) {
-            const existing = await Product.findOne({ sku: body.sku, _id: { $ne: params.id } });
+            const existing = await Product.findOne({ sku: body.sku, _id: { $ne: id } });
             if (existing)
                 return NextResponse.json({ error: "SKU already exists" }, { status: 400 });
         }
 
-        const product = await Product.findByIdAndUpdate(params.id, body, {
+        const product = await Product.findByIdAndUpdate(id, body, {
             new: true,
             runValidators: true,
         });
@@ -81,6 +85,8 @@ export async function DELETE(req, { params }) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const { id } = await params;
+
         await dbConnect();
 
         // Strategy 1: Soft Delete (set deletedAt)
@@ -88,8 +94,8 @@ export async function DELETE(req, { params }) {
         // Let's go with Hard Delete for now as per simple scope, unless specified otherwise in DATA_MODELS.
         // Actually, DATA_MODELS mentioned soft delete.
 
-        // const product = await Product.findByIdAndUpdate(params.id, { deletedAt: new Date() });
-        const product = await Product.findByIdAndDelete(params.id);
+        // const product = await Product.findByIdAndUpdate(id, { deletedAt: new Date() });
+        const product = await Product.findByIdAndDelete(id);
 
         if (!product) {
             return NextResponse.json({ error: "Product not found" }, { status: 404 });

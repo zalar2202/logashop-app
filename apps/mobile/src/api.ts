@@ -37,3 +37,17 @@ export function getApiHeadersWithCart(
   }
   return headers;
 }
+
+/**
+ * Optional: pass wishlist session ID for guest wishlist.
+ */
+export function getApiHeadersWithWishlist(
+  accessToken?: string | null,
+  wishlistSessionId?: string | null
+): Record<string, string> {
+  const headers = getApiHeaders(accessToken);
+  if (wishlistSessionId) {
+    headers['X-Wishlist-Session'] = wishlistSessionId;
+  }
+  return headers;
+}

@@ -7,19 +7,50 @@ import Wishlist from "@/models/Wishlist";
 import Product from "@/models/Product";
 
 /**
- * GET /api/wishlist — Get the current user's wishlist
+ * Resolve wishlist sessionId: cookie → X-Wishlist-Session header (for mobile).
+ */
+async function resolveWishlistSessionId(req) {
+    const cookieStore = await cookies();
+    const fromCookie = cookieStore.get("wishlist_session")?.value;
+    if (fromCookie) return fromCookie;
+    const fromHeader = req.headers.get("x-wishlist-session")?.trim();
+    if (fromHeader) return fromHeader;
+    return null;
+}
+
+/**
+ * GET /api/wishlist — Get the current user's or guest's wishlist
  */
 export async function GET(req) {
     try {
         await dbConnect();
 
         const user = await verifyAuth(req).catch(() => null);
-        const cookieStore = await cookies();
-        let sessionId = cookieStore.get("wishlist_session")?.value;
+        let sessionId = await resolveWishlistSessionId(req);
 
         const query = {};
         if (user) {
             query.userId = user._id;
+            // Merge guest wishlist into user on first fetch after login
+            if (sessionId) {
+                const guestWishlist = await Wishlist.findOne({ sessionId });
+                if (guestWishlist && guestWishlist.products?.length > 0) {
+                    let userWishlist = await Wishlist.findOne({ userId: user._id });
+                    if (!userWishlist) {
+                        userWishlist = new Wishlist({ userId: user._id, products: [] });
+                    }
+                    const existing = new Set(userWishlist.products.map((p) => String(p)));
+                    for (const p of guestWishlist.products) {
+                        if (!existing.has(String(p))) {
+                            userWishlist.products.push(p);
+                            existing.add(String(p));
+                        }
+                    }
+                    await userWishlist.save();
+                    await Wishlist.findByIdAndDelete(guestWishlist._id);
+                }
+                sessionId = null;
+            }
         } else if (sessionId) {
             query.sessionId = sessionId;
         } else {
@@ -35,10 +66,14 @@ export async function GET(req) {
             return NextResponse.json({ success: true, data: [] });
         }
 
-        return NextResponse.json({
+        const response = {
             success: true,
             data: JSON.parse(JSON.stringify(wishlist.products || [])),
-        });
+        };
+        if (!user && sessionId) {
+            response.sessionId = sessionId;
+        }
+        return NextResponse.json(response);
     } catch (error) {
         console.error("GET /api/wishlist error:", error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -47,13 +82,14 @@ export async function GET(req) {
 
 /**
  * POST /api/wishlist — Toggle a product in the wishlist
- * Body: { productId }
+ * Body: { productId, sessionId? } — sessionId for mobile guest wishlist
  */
 export async function POST(req) {
     try {
         await dbConnect();
 
-        const { productId } = await req.json();
+        const body = await req.json();
+        const { productId, sessionId: bodySessionId } = body;
         if (!productId) {
             return NextResponse.json(
                 { success: false, error: "Product ID is required" },
@@ -64,15 +100,21 @@ export async function POST(req) {
         const user = await verifyAuth(req).catch(() => null);
         const cookieStore = await cookies();
         let sessionId = cookieStore.get("wishlist_session")?.value;
+        if (!sessionId) {
+            sessionId = req.headers.get("x-wishlist-session")?.trim() || bodySessionId;
+        }
 
-        // If no session and no user, create a session
+        // If no session and no user, create a session (guest)
         if (!user && !sessionId) {
             sessionId = crypto.randomBytes(16).toString("hex");
-            cookieStore.set("wishlist_session", sessionId, {
-                path: "/",
-                maxAge: 60 * 60 * 24 * 30, // 30 days
-                httpOnly: true,
-            });
+            const isMobile = req.headers.get("x-client")?.toLowerCase() === "mobile";
+            if (!isMobile) {
+                cookieStore.set("wishlist_session", sessionId, {
+                    path: "/",
+                    maxAge: 60 * 60 * 24 * 30, // 30 days
+                    httpOnly: true,
+                });
+            }
         }
 
         const query = user ? { userId: user._id } : { sessionId };
@@ -84,29 +126,35 @@ export async function POST(req) {
                 products: [productId],
             });
             await wishlist.save();
-            return NextResponse.json({ success: true, action: "added" });
+            const res = { success: true, action: "added", count: 1 };
+            if (!user && sessionId && req.headers.get("x-client")?.toLowerCase() === "mobile") {
+                res.sessionId = sessionId;
+            }
+            return NextResponse.json(res);
         }
 
         const index = wishlist.products.indexOf(productId);
         let action = "";
 
         if (index > -1) {
-            // Remove if exists
             wishlist.products.splice(index, 1);
             action = "removed";
         } else {
-            // Add if doesn't exist
             wishlist.products.push(productId);
             action = "added";
         }
 
         await wishlist.save();
 
-        return NextResponse.json({
+        const res = {
             success: true,
             action,
             count: wishlist.products.length,
-        });
+        };
+        if (!user && sessionId && req.headers.get("x-client")?.toLowerCase() === "mobile") {
+            res.sessionId = sessionId;
+        }
+        return NextResponse.json(res);
     } catch (error) {
         console.error("POST /api/wishlist error:", error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

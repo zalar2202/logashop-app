@@ -12,7 +12,7 @@ export async function GET(req, { params }) {
     try {
         await dbConnect();
 
-        const productId = params.id;
+        const { id: productId } = await params;
         const variants = await ProductVariant.find({ productId, isActive: true }).sort("sku");
 
         return NextResponse.json({ success: true, data: variants });
@@ -32,7 +32,7 @@ export async function POST(req, { params }) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const productId = params.id;
+        const { id: productId } = await params;
         const body = await req.json();
 
         // Ensure sku is unique across ALL variants?

@@ -72,20 +72,21 @@ RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 nextjs
 
 # 1. Copy standalone output from Next.js build
-# In a monorepo, standalone contains the minimal node_modules and app structure
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+# Standalone contains the minimum node_modules and the built application
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone /app/
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static /app/apps/web/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public /app/apps/web/public
 
-# 2. Copy administrative scripts and models explicitly
-# These are needed for database seeding and are not always traced by Next.js standalone
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src/scripts ./apps/web/src/scripts
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src/models ./apps/web/src/models
+# 2. Explicitly copy administrative scripts and models
+# We create the directory first to ensure the COPY command places files in the correct location
+RUN mkdir -p /app/apps/web/src
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src/scripts /app/apps/web/src/scripts
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src/models /app/apps/web/src/models
 
-# 3. Ensure the package.json with "type": "module" is present
-# We overwrite the root package.json and the app package.json to ensure Node.js 
-# identifies scripts as ESM when run from the terminal.
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/package.json ./package.json
+# 3. Overwrite package.json files to ensure ESM support ("type": "module")
+# We place it in both the root and apps/web to be absolutely sure Node.js identifies the ESM type
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/package.json /app/package.json
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/package.json /app/apps/web/package.json
 
 # Permissions for storage volume
 RUN mkdir -p /app/storage && chown -R nextjs:nodejs /app/storage
@@ -96,5 +97,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-#ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["node", "apps/web/server.js"]

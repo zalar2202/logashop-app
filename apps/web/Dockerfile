@@ -72,21 +72,22 @@ RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 nextjs
 
 # 1. Copy standalone output from Next.js build
-# Standalone contains the minimum node_modules and the built application
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone /app/
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static /app/apps/web/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public /app/apps/web/public
 
 # 2. Explicitly copy administrative scripts and models
-# We create the directory first to ensure the COPY command places files in the correct location
-RUN mkdir -p /app/apps/web/src
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src/scripts /app/apps/web/src/scripts
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src/models /app/apps/web/src/models
+# We use trailing slashes and create the parent directory to ensure the structure is preserved
+RUN mkdir -p /app/apps/web/src/scripts /app/apps/web/src/models
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src/scripts/ /app/apps/web/src/scripts/
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src/models/ /app/apps/web/src/models/
 
 # 3. Overwrite package.json files to ensure ESM support ("type": "module")
-# We place it in both the root and apps/web to be absolutely sure Node.js identifies the ESM type
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/package.json /app/package.json
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/package.json /app/apps/web/package.json
+
+# Final ownership check for the src folder
+RUN chown -R nextjs:nodejs /app/apps/web/src
 
 # Permissions for storage volume
 RUN mkdir -p /app/storage && chown -R nextjs:nodejs /app/storage

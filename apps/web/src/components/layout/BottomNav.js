@@ -2,17 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, FileText, CreditCard, Menu } from "lucide-react";
+import { Home, Users, ShoppingCart, Calculator, Menu } from "lucide-react";
 
 export const BottomNav = ({ onMenuClick }) => {
     const pathname = usePathname();
 
     const shortcuts = [
         { name: "Home", href: "/panel/dashboard", icon: Home },
-        { name: "Users", href: "/panel/users", icon: Users },
+        { name: "Users", href: "/panel/admin/users", icon: Users },
         { name: "center-menu", type: "menu" }, // Placeholder for center button
-        { name: "Transactions", href: "/panel/transactions", icon: FileText },
-        { name: "Payments", href: "/panel/payments", icon: CreditCard },
+        { name: "Orders", href: "/panel/admin/orders", icon: ShoppingCart },
+        { name: "Accounting", href: "/panel/admin/accounting", icon: Calculator },
     ];
 
     return (

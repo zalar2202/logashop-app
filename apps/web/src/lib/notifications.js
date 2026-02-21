@@ -104,8 +104,8 @@ export const sendNotification = async ({
         }
 
         // 4. Handle Push Notification
-        // Check if user has push notifications enabled
-        if (!user.preferences?.pushNotifications) {
+        // Check if user has push notifications enabled (default: true)
+        if (user.preferences?.pushNotifications === false) {
             console.log("ℹ️ User has push notifications disabled");
             return { notification, pushSent: false, emailSent };
         }

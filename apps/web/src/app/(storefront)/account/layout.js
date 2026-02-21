@@ -3,13 +3,15 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { User, MapPin, Package, Settings, LogOut, ChevronRight, Bell, LayoutDashboard } from "lucide-react";
+import { User, MapPin, Package, Settings, LogOut, ChevronRight, Bell, LayoutDashboard, Heart, Ticket } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const ACCOUNT_NAV = [
     { href: "/account", label: "Dashboard", icon: User, exact: true },
     { href: "/account/orders", label: "My Orders", icon: Package },
+    { href: "/account/wishlist", label: "My Wishlist", icon: Heart },
     { href: "/account/notifications", label: "Notifications", icon: Bell },
+    { href: "/account/tickets", label: "Support Tickets", icon: Ticket },
     { href: "/account/addresses", label: "Address Book", icon: MapPin },
     { href: "/account/profile", label: "Profile Settings", icon: Settings },
 ];

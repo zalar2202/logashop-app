@@ -21,6 +21,7 @@ const scripts = [
     { name: "Admin User", file: "seedAdmin.js" },
     { name: "Categories", file: "seedCategories.js" },
     { name: "Products", file: "seedProducts.js" },
+    { name: "Tags", file: "seedTags.js" },
 ];
 
 async function runScript(scriptPath, name) {

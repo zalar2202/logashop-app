@@ -11,7 +11,8 @@ import Order from "@/models/Order";
  *   - orderNumber: fetch specific order by number
  *   - trackingCode: fetch specific order by tracking code (guest)
  *   - page, limit: pagination for order listing
- *   - status: filter by status
+ *   - status: filter by order status
+ *   - paymentStatus: filter by payment status (e.g. "paid")
  */
 export async function GET(req) {
     try {
@@ -63,17 +64,22 @@ export async function GET(req) {
         const page = parseInt(searchParams.get("page")) || 1;
         const limit = parseInt(searchParams.get("limit")) || 10;
         const status = searchParams.get("status");
+        const paymentStatus = searchParams.get("paymentStatus");
         const search = searchParams.get("search");
 
         const query = {};
 
-        // Admin sees all orders, user sees only their own
-        if (user.role !== "admin") {
+        // Admin/manager sees all orders, user sees only their own
+        if (!["admin", "manager"].includes(user.role)) {
             query.userId = user._id;
         }
 
         if (status) {
             query.status = status;
+        }
+
+        if (paymentStatus) {
+            query.paymentStatus = paymentStatus;
         }
 
         if (search) {

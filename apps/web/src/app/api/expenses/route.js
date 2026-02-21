@@ -7,7 +7,7 @@ export async function GET(request) {
     try {
         await dbConnect();
         const user = await verifyAuth(request);
-        if (!user || user.role !== "admin") {
+        if (!user || (user.role !== "admin" && user.role !== "manager")) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 
@@ -22,7 +22,7 @@ export async function POST(request) {
     try {
         await dbConnect();
         const user = await verifyAuth(request);
-        if (!user || user.role !== "admin") {
+        if (!user || (user.role !== "admin" && user.role !== "manager")) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 

@@ -158,7 +158,7 @@ export const Header = ({ onMenuClick, sidebarCollapsed }) => {
                                         <button
                                             onClick={() => {
                                                 setShowUserMenu(false);
-                                                router.push("/panel/settings");
+                                                router.push("/account/profile");
                                             }}
                                             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                                             style={{ color: "var(--color-text-primary)" }}

@@ -6,10 +6,6 @@ export const useAppSelector = useSelector;
 
 // Pre-typed hooks for common selectors
 export const useUsers = () => useAppSelector((state) => state.users);
-export const useCompanies = () => useAppSelector((state) => state.companies);
 export const useTransactions = () =>
     useAppSelector((state) => state.transactions);
-export const usePayments = () => useAppSelector((state) => state.payments);
-export const usePromotions = () =>
-    useAppSelector((state) => state.promotions);
 

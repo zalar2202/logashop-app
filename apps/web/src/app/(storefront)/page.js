@@ -2,6 +2,7 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 import Image from "next/image";
+import NewsletterSubscribe from "@/components/storefront/NewsletterSubscribe";
 import dbConnect from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Category from "@/models/Category";
@@ -92,13 +93,13 @@ export default async function HomePage() {
     return (
         <div>
             {/* Hero Section */}
-            <section className="relative bg-primary bg-gradient-to-r from-primary to-primary-dark text-white overflow-hidden">
+            <section className="relative bg-[var(--color-primary)] bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-dark)] text-white overflow-hidden">
                 <div className="container mx-auto px-4 py-16 md:py-24">
                     <div className="max-w-2xl">
-                        <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-sm">
                             Discover Quality Products for Every Lifestyle
                         </h1>
-                        <p className="text-lg md:text-xl opacity-90 mb-8">
+                        <p className="text-lg md:text-xl text-white/95 mb-8">
                             Shop the latest trends with free shipping on orders over $50.
                         </p>
                         <div className="flex flex-wrap gap-4">
@@ -267,28 +268,7 @@ export default async function HomePage() {
             )}
 
             {/* Newsletter CTA */}
-            <section className="py-16 bg-[var(--color-background-elevated)]">
-                <div className="container mx-auto px-4 text-center">
-                    <h2 className="text-2xl md:text-3xl font-bold mb-4">Stay in the Loop</h2>
-                    <p className="text-[var(--color-text-secondary)] mb-6 max-w-xl mx-auto">
-                        Subscribe to our newsletter and get 10% off your first order, plus exclusive
-                        access to sales and new products.
-                    </p>
-                    <form className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-                        <input
-                            type="email"
-                            placeholder="Enter your email"
-                            className="flex-1 px-4 py-3 rounded-full border border-[var(--color-border)] bg-white focus:outline-none focus:border-[var(--color-primary)]"
-                        />
-                        <button
-                            type="submit"
-                            className="px-6 py-3 bg-[var(--color-primary)] text-white font-medium rounded-full hover:bg-[var(--color-primary-dark)] transition"
-                        >
-                            Subscribe
-                        </button>
-                    </form>
-                </div>
-            </section>
+            <NewsletterSubscribe variant="homepage" />
         </div>
     );
 }

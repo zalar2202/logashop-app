@@ -11,7 +11,7 @@ export async function GET(req) {
         await dbConnect();
 
         const user = await verifyAuth(req);
-        if (user.role !== "admin") {
+        if (user.role !== "admin" && user.role !== "manager") {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
         }
 
@@ -45,7 +45,7 @@ export async function POST(req) {
         await dbConnect();
 
         const user = await verifyAuth(req);
-        if (user.role !== "admin") {
+        if (user.role !== "admin" && user.role !== "manager") {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
         }
 

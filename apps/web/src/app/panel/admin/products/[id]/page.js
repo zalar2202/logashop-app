@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ContentWrapper } from "@/components/layout/ContentWrapper";
 import { Card, CardHeader } from "@/components/common/Card";
@@ -23,14 +23,17 @@ import { toast } from "sonner";
 import axios from "axios";
 import { formatDate } from "@/lib/utils";
 
-export default function ProductViewPage({ params }) {
+export default function ProductViewPage() {
     const router = useRouter();
+    const params = useParams();
+    const id = params?.id;
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (!id) return;
         axios
-            .get(`/api/products/${params.id}`)
+            .get(`/api/products/${id}`)
             .then(({ data }) => {
                 setProduct(data.data);
             })
@@ -39,13 +42,13 @@ export default function ProductViewPage({ params }) {
                 router.push("/panel/admin/products");
             })
             .finally(() => setLoading(false));
-    }, [params.id, router]);
+    }, [id, router]);
 
     const handleDelete = async () => {
         if (!confirm("Are you sure you want to delete this product?")) return;
 
         try {
-            await axios.delete(`/api/products/${params.id}`);
+            await axios.delete(`/api/products/${id}`);
             toast.success("Product deleted successfully");
             router.push("/panel/admin/products");
         } catch (error) {
@@ -90,17 +93,31 @@ export default function ProductViewPage({ params }) {
     return (
         <ContentWrapper>
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="sm" onClick={() => router.back()}>
-                        <ArrowLeft size={18} />
-                    </Button>
+            <div className="mb-6">
+                <Button
+                    variant="secondary"
+                    icon={<ArrowLeft size={18} />}
+                    onClick={() => router.back()}
+                    className="mb-4"
+                >
+                    Back
+                </Button>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold">{product.name}</h1>
-                        <p className="text-[var(--color-text-secondary)]">SKU: {product.sku}</p>
+                        <h1
+                            className="text-2xl font-bold"
+                            style={{ color: "var(--color-text-primary)" }}
+                        >
+                            {product.name}
+                        </h1>
+                        <p
+                            className="text-sm mt-1"
+                            style={{ color: "var(--color-text-secondary)" }}
+                        >
+                            SKU: {product.sku}
+                        </p>
                     </div>
-                </div>
-                <div className="flex gap-2">
+                    <div className="flex gap-2">
                     <Link href={`/panel/admin/products/${product._id}/edit`}>
                         <Button variant="secondary" icon={<Edit size={16} />}>
                             Edit
@@ -114,6 +131,7 @@ export default function ProductViewPage({ params }) {
                     >
                         Delete
                     </Button>
+                    </div>
                 </div>
             </div>
 

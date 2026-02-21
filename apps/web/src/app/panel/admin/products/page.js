@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { fetchProducts, deleteProduct } from "@/features/products/productsSlice";
 import {
@@ -17,27 +16,50 @@ import { Button } from "@/components/common/Button";
 import { Badge } from "@/components/common/Badge";
 import { Card } from "@/components/common/Card";
 import { ContentWrapper } from "@/components/layout/ContentWrapper";
-import { Plus, Edit, Trash2, Search, Filter, Eye } from "lucide-react";
-import { InputField } from "@/components/forms/InputField";
+import { Plus, Edit, Trash2, Search, Eye } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
 export default function ProductsPage() {
-    const router = useRouter();
     const dispatch = useAppDispatch();
     const { list: products, loading } = useAppSelector((state) => state.products);
     const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [categoryFilter, setCategoryFilter] = useState("all");
     const [categories, setCategories] = useState([]);
 
-    useEffect(() => {
-        // Load products
-        dispatch(fetchProducts({ page: 1, limit: 20 }));
+    const fetchWithFilters = (overrides = {}) => {
+        dispatch(
+            fetchProducts({
+                page: 1,
+                limit: 20,
+                search: search || undefined,
+                status: statusFilter !== "all" ? statusFilter : undefined,
+                category: categoryFilter !== "all" ? categoryFilter : undefined,
+                ...overrides,
+            })
+        );
+    };
 
-        // Load categories for filter (basic)
+    useEffect(() => {
+        fetchWithFilters();
+
+        // Load categories for filter
         axios.get("/api/categories?type=list").then(({ data }) => {
-            setCategories(data.data);
+            if (data?.data) setCategories(data.data);
         });
     }, [dispatch]);
+
+    // Debounced search - refetch as user types (skip initial mount, initial load handled above)
+    const isFirstSearch = useRef(true);
+    useEffect(() => {
+        if (isFirstSearch.current) {
+            isFirstSearch.current = false;
+            return;
+        }
+        const timer = setTimeout(() => fetchWithFilters(), 400);
+        return () => clearTimeout(timer);
+    }, [search]);
 
     const handleDelete = async (id) => {
         if (!confirm("Are you sure you want to delete this product?")) return;
@@ -49,35 +71,92 @@ export default function ProductsPage() {
         }
     };
 
-    const handleSearch = (e) => {
-        e.preventDefault();
-        dispatch(fetchProducts({ search, page: 1 }));
+    const handleStatusChange = (e) => {
+        setStatusFilter(e.target.value);
+        dispatch(
+            fetchProducts({
+                page: 1,
+                limit: 20,
+                search: search || undefined,
+                status: e.target.value !== "all" ? e.target.value : undefined,
+                category: categoryFilter !== "all" ? categoryFilter : undefined,
+            })
+        );
+    };
+
+    const handleCategoryChange = (e) => {
+        const value = e.target.value;
+        setCategoryFilter(value);
+        dispatch(
+            fetchProducts({
+                page: 1,
+                limit: 20,
+                search: search || undefined,
+                status: statusFilter !== "all" ? statusFilter : undefined,
+                category: value !== "all" ? value : undefined,
+            })
+        );
     };
 
     return (
         <ContentWrapper>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Products</h1>
-                <Link href="/panel/admin/products/create">
-                    <Button icon={<Plus size={16} />}>Add Product</Button>
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+                <div>
+                    <h1 className="text-2xl font-bold">Products</h1>
+                    <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                        Manage your product catalog, inventory, and pricing.
+                    </p>
+                </div>
+                <Link href="/panel/admin/products/create" className="w-full md:w-auto">
+                    <Button icon={<Plus size={16} />} className="w-full md:w-auto">
+                        Add Product
+                    </Button>
                 </Link>
             </div>
 
             <Card className="mb-6">
-                <form onSubmit={handleSearch} className="flex gap-4 p-4">
-                    <div className="flex-1">
-                        <InputField
-                            name="search"
-                            placeholder="Search by name or SKU..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            icon={<Search size={18} />}
-                        />
+                <div className="p-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <div className="flex-1 min-w-0">
+                            <div className="relative">
+                                <Search
+                                    size={18}
+                                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                                />
+                                <input
+                                    type="text"
+                                    name="search"
+                                    placeholder="Search by name or SKU..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                                />
+                            </div>
+                        </div>
+                        <select
+                            value={statusFilter}
+                            onChange={handleStatusChange}
+                            className="w-full md:w-auto md:min-w-[140px] px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-white"
+                        >
+                            <option value="all">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="draft">Draft</option>
+                            <option value="archived">Archived</option>
+                        </select>
+                        <select
+                            value={categoryFilter}
+                            onChange={handleCategoryChange}
+                            className="w-full md:w-auto md:min-w-[160px] px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-white"
+                        >
+                            <option value="all">All Categories</option>
+                            {categories.map((cat) => (
+                                <option key={cat._id} value={cat._id}>
+                                    {cat.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
-                    <Button type="submit" variant="secondary">
-                        Search
-                    </Button>
-                </form>
+                </div>
             </Card>
 
             <Card className="overflow-hidden">

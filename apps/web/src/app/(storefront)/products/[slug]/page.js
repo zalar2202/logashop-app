@@ -275,9 +275,11 @@ export default async function ProductPage({ params }) {
                                 Description
                             </h3>
                             <div
-                                className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
+                                className="prose prose-sm max-w-none text-gray-700 leading-relaxed product-description-content"
                                 dangerouslySetInnerHTML={{
-                                    __html: product.description?.replace(/\n/g, "<br>"),
+                                    __html: product.description?.includes("<")
+                                        ? product.description
+                                        : (product.description || "").replace(/\n/g, "<br>"),
                                 }}
                             />
                         </div>

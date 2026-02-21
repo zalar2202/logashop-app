@@ -1,8 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL, API_TIMEOUT, STORAGE_KEYS } from "@/constants/config";
 
-const isDebugLoggingEnabled = process.env.NEXT_PUBLIC_ENABLE_API_DEBUG === "true";
-
 /**
  * Axios Instance Configuration
  * Centralized HTTP client with interceptors for authentication and error handling
@@ -27,14 +25,6 @@ axiosInstance.interceptors.request.use(
         // Ensure credentials are included (cookies sent with requests)
         config.withCredentials = true;
 
-        // Log request in development
-        if (isDebugLoggingEnabled) {
-            console.log(`🚀 [API Request] ${config.method?.toUpperCase()} ${config.url}`, {
-                params: config.params,
-                data: config.data,
-            });
-        }
-
         return config;
     },
     (error) => {
@@ -48,20 +38,7 @@ axiosInstance.interceptors.request.use(
  * Handles common response scenarios and errors
  */
 axiosInstance.interceptors.response.use(
-    (response) => {
-        // Log response in development
-        if (isDebugLoggingEnabled) {
-            console.log(
-                `✅ [API Response] ${response.config.method?.toUpperCase()} ${response.config.url}`,
-                {
-                    status: response.status,
-                    data: response.data,
-                }
-            );
-        }
-
-        return response;
-    },
+    (response) => response,
     (error) => {
         // Handle different error scenarios
         if (error.response) {
@@ -169,10 +146,6 @@ function handleUnauthorized(isAuthCheck = false) {
         // 1. Already on login page
         // 2. This is just an auth check (not a real API call failure)
         if (!isLoginPage && !isAuthCheck) {
-            if (isDebugLoggingEnabled) {
-                console.log("🔒 Session expired. Redirecting to login...");
-            }
-
             // Store the current path to redirect back after login
             sessionStorage.setItem("redirect_after_login", currentPath);
 

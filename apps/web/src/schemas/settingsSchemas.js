@@ -22,13 +22,6 @@ export const profileUpdateSchema = Yup.object({
         .trim()
         .nullable(),
     avatar: Yup.mixed().nullable(), // File validation handled by FileUploadField
-    technicalDetails: Yup.object({
-        domainName: Yup.string().nullable().trim(),
-        serverIP: Yup.string().nullable().trim(),
-        serverUser: Yup.string().nullable().trim(),
-        serverPassword: Yup.string().nullable(),
-        serverPort: Yup.string().nullable().trim(),
-    }).nullable(),
 });
 
 /**

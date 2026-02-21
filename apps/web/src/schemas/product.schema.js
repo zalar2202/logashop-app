@@ -12,13 +12,19 @@ export const productSchema = Yup.object().shape({
         .required("Slug is required")
         .matches(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
     sku: Yup.string().required("SKU is required").max(50, "SKU cannot exceed 50 characters"),
-    description: Yup.string().required("Description is required"),
+    description: Yup.string()
+        .required("Description is required")
+        .test("not-empty-html", "Description is required", (val) => {
+            if (!val || typeof val !== "string") return false;
+            const stripped = val.replace(/<[^>]*>/g, "").trim();
+            return stripped.length > 0;
+        }),
     shortDescription: Yup.string().max(200, "Short description cannot exceed 200 characters"),
     productType: Yup.string()
         .oneOf(["physical", "digital", "bundle"], "Invalid product type")
         .default("physical"),
     categoryId: Yup.string().required("Category is required"),
-    tags: Yup.string(), // Comma-separated string, converted to array on submit
+    tags: Yup.array().of(Yup.string()).default([]),
     brand: Yup.string(),
     basePrice: Yup.number().required("Base price is required").min(0, "Price must be positive"),
     salePrice: Yup.number()
@@ -40,8 +46,8 @@ export const productSchema = Yup.object().shape({
     digitalFile: Yup.object().shape({
         url: Yup.string().when("$productType", {
             is: "digital",
-            then: Yup.string().required("File is required for digital products"),
-            otherwise: Yup.string().notRequired(),
+            then: () => Yup.string().required("File is required for digital products"),
+            otherwise: () => Yup.string(),
         }),
         fileName: Yup.string(),
         downloadLimit: Yup.number().nullable().min(0),
@@ -60,7 +66,7 @@ export const productInitialValues = {
     shortDescription: "",
     productType: "physical",
     categoryId: "",
-    tags: "",
+    tags: [],
     brand: "",
     basePrice: 0,
     salePrice: null,

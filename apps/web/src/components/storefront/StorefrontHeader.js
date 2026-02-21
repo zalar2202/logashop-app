@@ -107,7 +107,7 @@ export default function StorefrontHeader() {
                         {/* Actions */}
                         <div className="flex items-center gap-4">
                             <Link
-                                href="/wishlist"
+                                href="/account/wishlist"
                                 className="hidden md:flex relative items-center justify-center p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition"
                                 title="Wishlist"
                                 aria-label="Wishlist"
@@ -240,7 +240,7 @@ export default function StorefrontHeader() {
                             ))}
                             <hr className="my-2" />
                             <Link
-                                href="/wishlist"
+                                href="/account/wishlist"
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="block px-3 py-2 rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-gray-50"
                             >

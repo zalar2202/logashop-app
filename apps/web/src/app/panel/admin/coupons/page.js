@@ -77,8 +77,13 @@ export default function CouponsPage() {
         <ContentWrapper>
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold">Discount Coupons</h1>
-                    <p className="text-sm text-[var(--color-text-secondary)]">
+                    <h1
+                        className="text-2xl font-bold"
+                        style={{ color: "var(--color-text-primary)" }}
+                    >
+                        Discount Coupons
+                    </h1>
+                    <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
                         Manage promotional codes and discounts
                     </p>
                 </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { ContentWrapper } from "@/components/layout/ContentWrapper";
 import { ProductForm } from "@/components/products/ProductForm";
 import { Button } from "@/components/common/Button";
@@ -9,13 +9,16 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
-export default function EditProductPage({ params }) {
+export default function EditProductPage() {
     const router = useRouter();
+    const params = useParams();
+    const id = params?.id;
     const [product, setProduct] = useState(null);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (!id) return;
         const fetchData = async () => {
             try {
                 // Fetch categories
@@ -28,7 +31,7 @@ export default function EditProductPage({ params }) {
                 );
 
                 // Fetch product
-                const prodResponse = await axios.get(`/api/products/${params.id}`);
+                const prodResponse = await axios.get(`/api/products/${id}`);
                 setProduct(prodResponse.data.data);
             } catch (error) {
                 toast.error("Failed to load product");
@@ -39,11 +42,11 @@ export default function EditProductPage({ params }) {
         };
 
         fetchData();
-    }, [params.id, router]);
+    }, [id, router]);
 
     const handleSubmit = async (values, { setSubmitting }) => {
         try {
-            await axios.put(`/api/products/${params.id}`, values);
+            await axios.put(`/api/products/${id}`, values);
             toast.success("Product updated successfully");
             router.push("/panel/admin/products");
         } catch (error) {
@@ -82,14 +85,22 @@ export default function EditProductPage({ params }) {
 
     return (
         <ContentWrapper>
-            <div className="flex items-center gap-4 mb-6">
-                <Button variant="ghost" size="sm" onClick={() => router.back()}>
-                    <ArrowLeft size={18} />
+            {/* Header */}
+            <div className="mb-6">
+                <Button
+                    variant="secondary"
+                    icon={<ArrowLeft size={18} />}
+                    onClick={() => router.back()}
+                    className="mb-4"
+                >
+                    Back
                 </Button>
-                <div>
-                    <h1 className="text-2xl font-bold">Edit Product</h1>
-                    <p className="text-[var(--color-text-secondary)]">{product.name}</p>
-                </div>
+                <h1 className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>
+                    Edit Product
+                </h1>
+                <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                    Update product information
+                </p>
             </div>
 
             <ProductForm

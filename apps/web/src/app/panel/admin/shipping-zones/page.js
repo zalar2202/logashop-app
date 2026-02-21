@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
+import { ContentWrapper } from "@/components/layout/ContentWrapper";
 
 // ─── Country Options ───────────────────────────────────────────
 const COUNTRIES = [
@@ -308,6 +309,7 @@ export default function ShippingZonesPage() {
     // ─── EDIT/CREATE FORM ──────────────────────────────────────
     if (editingZone) {
         return (
+            <ContentWrapper>
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -649,11 +651,13 @@ export default function ShippingZonesPage() {
                     </div>
                 </div>
             </div>
+            </ContentWrapper>
         );
     }
 
     // ─── LIST VIEW ─────────────────────────────────────────────
     return (
+        <ContentWrapper>
         <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -907,5 +911,6 @@ export default function ShippingZonesPage() {
                 </div>
             )}
         </div>
+        </ContentWrapper>
     );
 }

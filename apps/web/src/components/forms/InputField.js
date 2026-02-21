@@ -33,6 +33,8 @@ export const InputField = ({
         const hasError = meta.touched && meta.error;
         // Merge props: local props override field props if both exist (though usually they shouldn't overlap much)
         const inputProps = { ...fieldProps, ...props };
+        // React warns when value is null - use empty string for controlled inputs
+        const safeValue = inputProps.value == null ? "" : inputProps.value;
 
         return (
             <div className="relative group">
@@ -44,6 +46,7 @@ export const InputField = ({
 
                 <input
                     {...inputProps}
+                    value={safeValue}
                     id={name}
                     name={name}
                     type={inputType}

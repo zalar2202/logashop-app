@@ -33,10 +33,10 @@ if (!MONGO_URI) {
  */
 const sampleUsers = [
     {
-        name: 'John Manager',
-        email: 'john.manager@example.com',
-        password: 'Manager@123',
-        role: 'manager',
+        name: 'John Doe',
+        email: 'john.doe@example.com',
+        password: 'User@123',
+        role: 'user',
         status: 'active',
         phone: '+1234567891',
     },
@@ -67,8 +67,8 @@ const sampleUsers = [
     {
         name: 'David Wilson',
         email: 'david.wilson@example.com',
-        password: 'Manager@123',
-        role: 'manager',
+        password: 'User@123',
+        role: 'user',
         status: 'active',
         phone: '+1234567895',
     },
@@ -99,8 +99,8 @@ const sampleUsers = [
     {
         name: 'James Miller',
         email: 'james.miller@example.com',
-        password: 'Manager@123',
-        role: 'manager',
+        password: 'User@123',
+        role: 'user',
         status: 'active',
         phone: '+1234567899',
     },
@@ -149,9 +149,7 @@ async function seedUsers() {
 
         if (created > 0) {
             console.log('\n🎉 Sample users created successfully!');
-            console.log('\n🔐 Default Credentials:');
-            console.log('   Managers: password is "Manager@123"');
-            console.log('   Users: password is "User@123"');
+            console.log('\n🔐 Default password: "User@123"');
         }
 
         console.log('\n💡 You can now test the user management features!\n');

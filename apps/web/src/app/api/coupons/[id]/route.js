@@ -11,7 +11,7 @@ export async function GET(req, { params }) {
         await dbConnect();
 
         const user = await verifyAuth(req);
-        if (user.role !== "admin") {
+        if (user.role !== "admin" && user.role !== "manager") {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
         }
 
@@ -43,7 +43,7 @@ export async function PUT(req, { params }) {
         await dbConnect();
 
         const user = await verifyAuth(req);
-        if (user.role !== "admin") {
+        if (user.role !== "admin" && user.role !== "manager") {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
         }
 
@@ -79,7 +79,7 @@ export async function DELETE(req, { params }) {
         await dbConnect();
 
         const user = await verifyAuth(req);
-        if (user.role !== "admin") {
+        if (user.role !== "admin" && user.role !== "manager") {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
         }
 

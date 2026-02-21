@@ -102,9 +102,18 @@ export default function CategoriesPage() {
 
     return (
         <ContentWrapper>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Categories</h1>
-                <Button onClick={openCreate} icon={<Plus size={16} />}>
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+                <div>
+                    <h1 className="text-2xl font-bold">Categories</h1>
+                    <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                        Organize products with categories and hierarchies.
+                    </p>
+                </div>
+                <Button
+                    onClick={openCreate}
+                    icon={<Plus size={16} />}
+                    className="w-full md:w-auto"
+                >
                     Add Category
                 </Button>
             </div>

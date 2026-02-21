@@ -1,6 +1,7 @@
 import "@/styles/website.css";
 import Link from "next/link";
 import StorefrontHeader from "@/components/storefront/StorefrontHeader";
+import NewsletterSubscribe from "@/components/storefront/NewsletterSubscribe";
 
 export default function StorefrontLayout({ children }) {
     return (
@@ -99,26 +100,7 @@ export default function StorefrontLayout({ children }) {
                         </div>
 
                         {/* Newsletter */}
-                        <div>
-                            <h4 className="font-bold mb-4">Stay Updated</h4>
-                            <p className="text-sm text-[var(--color-text-secondary)] mb-4">
-                                Subscribe to our newsletter for exclusive deals.
-                            </p>
-                            <form className="flex gap-2">
-                                <input
-                                    type="email"
-                                    placeholder="Your email"
-                                    aria-label="Email address for newsletter"
-                                    className="flex-1 px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] bg-white"
-                                />
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm rounded-lg hover:bg-[var(--color-primary-dark)] transition"
-                                >
-                                    Subscribe
-                                </button>
-                            </form>
-                        </div>
+                        <NewsletterSubscribe variant="footer" />
                     </div>
 
                     <div className="border-t border-[var(--color-border)] mt-8 pt-8 text-center text-sm text-[var(--color-text-secondary)]">

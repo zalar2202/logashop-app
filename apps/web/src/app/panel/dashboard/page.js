@@ -105,7 +105,7 @@ export default function DashboardPage() {
             icon: Users,
             color: "orange",
             gradient: "from-orange-500 to-amber-500",
-            link: "/panel/users",
+            link: "/panel/admin/users",
         },
     ];
 

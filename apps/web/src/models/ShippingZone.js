@@ -115,7 +115,9 @@ ShippingZoneSchema.pre("save", async function () {
 });
 
 // Index for efficient zone lookups
-ShippingZoneSchema.index({ countries: 1, states: 1, isActive: 1 });
+// Note: MongoDB cannot index two array fields in one compound index ("parallel arrays" error).
+// Use countries + isActive only; state filtering is done in-memory.
+ShippingZoneSchema.index({ countries: 1, isActive: 1 });
 ShippingZoneSchema.index({ isDefault: 1 });
 
 /**

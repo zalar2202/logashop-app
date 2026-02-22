@@ -102,6 +102,9 @@ export async function POST(req) {
             );
         }
 
+        // Sync indexes to drop the old parallel-array index if it exists
+        await ShippingZone.syncIndexes();
+
         const zone = await ShippingZone.create({
             name: name.trim(),
             countries: countries || [],

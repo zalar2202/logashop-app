@@ -486,7 +486,7 @@ Cart: { userId: 1 }, { sessionId: 1 } (each unique, sparse)
 Wishlist: { userId: 1 }, { sessionId: 1 } (each unique, sparse)
 Review: { productId: 1, userId: 1 } (unique), { productId: 1 }, { userId: 1 }, { status: 1 }
 DigitalDelivery: { orderId: 1 }, { downloadToken: 1 }
-ShippingZone: { countries: 1, states: 1, isActive: 1 }, { isDefault: 1 }
+ShippingZone: { countries: 1, isActive: 1 }, { isDefault: 1 } — MongoDB forbids compound indexes on two array fields ("parallel arrays"); state filtering is in-memory.
 Subscriber: { email: 1 } (unique), { status: 1 }
 ```
 

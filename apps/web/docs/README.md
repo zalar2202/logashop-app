@@ -10,6 +10,8 @@ This folder contains documentation **for developers** working on the LogaShop e-
 | -------- | ------- |
 | **[README.md](README.md)** (this file) | Overview, scope, status, and how to get started |
 | **[DATA_MODELS.md](DATA_MODELS.md)** | Database schema: all models, fields, relationships, indexes |
+| **[GEO_API.md](GEO_API.md)** | Country/State/City API: config, routes, checkout & shipping zones |
+| **[COUNTRY_STATE_FEATURE.md](COUNTRY_STATE_FEATURE.md)** | Country/State/City implementation notes: checkout, shipping zones, index fix |
 | **[ROADMAP.md](ROADMAP.md)** | Detailed phase-by-phase task breakdown and timeline |
 
 ---

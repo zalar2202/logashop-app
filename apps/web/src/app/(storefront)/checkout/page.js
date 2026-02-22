@@ -60,59 +60,6 @@ const FALLBACK_SHIPPING_METHODS = [
     },
 ];
 
-const US_STATES = [
-    "AL",
-    "AK",
-    "AZ",
-    "AR",
-    "CA",
-    "CO",
-    "CT",
-    "DE",
-    "FL",
-    "GA",
-    "HI",
-    "ID",
-    "IL",
-    "IN",
-    "IA",
-    "KS",
-    "KY",
-    "LA",
-    "ME",
-    "MD",
-    "MA",
-    "MI",
-    "MN",
-    "MS",
-    "MO",
-    "MT",
-    "NE",
-    "NV",
-    "NH",
-    "NJ",
-    "NM",
-    "NY",
-    "NC",
-    "ND",
-    "OH",
-    "OK",
-    "OR",
-    "PA",
-    "RI",
-    "SC",
-    "SD",
-    "TN",
-    "TX",
-    "UT",
-    "VT",
-    "VA",
-    "WA",
-    "WV",
-    "WI",
-    "WY",
-];
-
 const INITIAL_ADDRESS = {
     firstName: "",
     lastName: "",
@@ -125,6 +72,31 @@ const INITIAL_ADDRESS = {
     country: "US",
     phone: "",
 };
+
+// Defined outside to prevent re-mounting on every keystroke (focus loss bug)
+const Input = ({ label, name, value, onChange, error, type = "text", placeholder, required }) => (
+    <div>
+        <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
+            {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <input
+            type={type}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            className={`w-full px-4 py-2.5 rounded-lg border ${
+                error
+                    ? "border-red-500 focus:ring-red-500/20"
+                    : "border-[var(--color-border)] focus:ring-[var(--color-primary)]/20"
+            } focus:outline-none focus:ring-2 transition bg-white`}
+        />
+        {error && (
+            <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                <AlertCircle size={12} /> {error}
+            </p>
+        )}
+    </div>
+);
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -165,6 +137,78 @@ export default function CheckoutPage() {
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [validatingCoupon, setValidatingCoupon] = useState(false);
     const [couponError, setCouponError] = useState("");
+
+    // Geo data from Country State City API
+    const [countries, setCountries] = useState([]);
+    const [states, setStates] = useState([]);
+    const [cities, setCities] = useState([]);
+    const [loadingStates, setLoadingStates] = useState(false);
+    const [loadingCities, setLoadingCities] = useState(false);
+    const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+
+    // Fetch countries on mount
+    useEffect(() => {
+        axios
+            .get("/api/geo/countries")
+            .then(({ data }) => {
+                if (data.success && Array.isArray(data.data)) {
+                    setCountries(data.data);
+                }
+            })
+            .catch(console.error);
+    }, []);
+
+    // Fetch states when shipping country changes
+    useEffect(() => {
+        const country = shippingAddress.country?.trim();
+        if (!country) {
+            setStates([]);
+            return;
+        }
+        setLoadingStates(true);
+        axios
+            .get("/api/geo/states", { params: { country } })
+            .then(({ data }) => {
+                if (data.success && Array.isArray(data.data)) {
+                    setStates(data.data);
+                } else {
+                    setStates([]);
+                }
+            })
+            .catch(() => setStates([]))
+            .finally(() => setLoadingStates(false));
+    }, [shippingAddress.country]);
+
+    // Fetch cities when country + state are selected (for autocomplete)
+    const fetchCitiesForShipping = useCallback(() => {
+        const country = shippingAddress.country?.trim();
+        const state = shippingAddress.state?.trim();
+        if (!country || !state) {
+            setCities([]);
+            return;
+        }
+        setLoadingCities(true);
+        axios
+            .get("/api/geo/cities", { params: { country, state } })
+            .then(({ data }) => {
+                if (data.success && Array.isArray(data.data)) {
+                    setCities(data.data);
+                } else {
+                    setCities([]);
+                }
+            })
+            .catch(() => setCities([]))
+            .finally(() => setLoadingCities(false));
+    }, [shippingAddress.country, shippingAddress.state]);
+
+    // Fetch cities when state changes and we have both country & state
+    useEffect(() => {
+        if (shippingAddress.country && shippingAddress.state && states.length > 0) {
+            fetchCitiesForShipping();
+        } else {
+            setCities([]);
+        }
+    }, [shippingAddress.country, shippingAddress.state, states.length, fetchCitiesForShipping]);
 
     // Fetch saved addresses for logged-in users
     useEffect(() => {
@@ -277,6 +321,18 @@ export default function CheckoutPage() {
         return () => controller.abort();
     }, [shippingAddress.country, shippingAddress.state]);
 
+    // Get human-readable state name for display (we store iso2/code for API, show name to user)
+    const getStateDisplayName = useCallback(
+        (stateValue) => {
+            if (!stateValue) return "";
+            const s = states.find(
+                (x) => (x.iso2 || x.name) === stateValue || String(x.id) === stateValue
+            );
+            return s ? s.name : stateValue;
+        },
+        [states]
+    );
+
     // Calculate shipping cost
     const getShippingCost = useCallback(() => {
         const method = availableMethods.find((m) => (m.methodId || m.id) === shippingMethod);
@@ -334,6 +390,7 @@ export default function CheckoutPage() {
         if (!shippingAddress.firstName.trim()) newErrors.firstName = "First name is required";
         if (!shippingAddress.lastName.trim()) newErrors.lastName = "Last name is required";
         if (!shippingAddress.address1.trim()) newErrors.address1 = "Address is required";
+        if (!shippingAddress.country?.trim()) newErrors.country = "Country is required";
         if (!shippingAddress.city.trim()) newErrors.city = "City is required";
         if (!shippingAddress.state.trim()) newErrors.state = "State is required";
         if (!shippingAddress.zipCode.trim()) newErrors.zipCode = "ZIP code is required";
@@ -430,40 +487,6 @@ export default function CheckoutPage() {
             setPlacingOrder(false);
         }
     };
-
-    // Input component
-    const Input = ({
-        label,
-        name,
-        value,
-        onChange,
-        error,
-        type = "text",
-        placeholder,
-        required,
-    }) => (
-        <div>
-            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
-                {label} {required && <span className="text-red-500">*</span>}
-            </label>
-            <input
-                type={type}
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-                className={`w-full px-4 py-2.5 rounded-lg border ${
-                    error
-                        ? "border-red-500 focus:ring-red-500/20"
-                        : "border-[var(--color-border)] focus:ring-[var(--color-primary)]/20"
-                } focus:outline-none focus:ring-2 transition bg-white`}
-            />
-            {error && (
-                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                    <AlertCircle size={12} /> {error}
-                </p>
-            )}
-        </div>
-    );
 
     if (itemCount === 0) {
         return (
@@ -675,23 +698,78 @@ export default function CheckoutPage() {
                                                 placeholder="Apt, Suite, etc. (Optional)"
                                             />
                                         </div>
-                                        <Input
-                                            label="City"
-                                            value={shippingAddress.city}
-                                            onChange={(e) =>
-                                                setShippingAddress((prev) => ({
-                                                    ...prev,
-                                                    city: e.target.value,
-                                                }))
-                                            }
-                                            error={errors.city}
-                                            required
-                                        />
                                         <div>
                                             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
-                                                State <span className="text-red-500">*</span>
+                                                Country <span className="text-red-500">*</span>
                                             </label>
                                             <select
+                                                value={shippingAddress.country}
+                                                onChange={(e) =>
+                                                    setShippingAddress((prev) => ({
+                                                        ...prev,
+                                                        country: e.target.value,
+                                                        state: "",
+                                                        city: "",
+                                                    }))
+                                                }
+                                                className={`w-full px-4 py-2.5 rounded-lg border ${
+                                                    errors.country
+                                                        ? "border-red-500 focus:ring-red-500/20"
+                                                        : "border-[var(--color-border)] focus:ring-[var(--color-primary)]/20"
+                                                } focus:outline-none focus:ring-2 transition bg-white`}
+                                            >
+                                                <option value="">Select Country</option>
+                                                {countries.map((c) => (
+                                                    <option key={c.iso2} value={c.iso2}>
+                                                        {c.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {errors.country && (
+                                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                                                    <AlertCircle size={12} /> {errors.country}
+                                                </p>
+                                            )}
+                                        </div>
+                                        {states.length > 0 ? (
+                                            <div>
+                                                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
+                                                    State / Province <span className="text-red-500">*</span>
+                                                </label>
+                                                <select
+                                                    value={shippingAddress.state}
+                                                    onChange={(e) =>
+                                                        setShippingAddress((prev) => ({
+                                                            ...prev,
+                                                            state: e.target.value,
+                                                            city: "",
+                                                        }))
+                                                    }
+                                                    disabled={loadingStates}
+                                                    className={`w-full px-4 py-2.5 rounded-lg border ${
+                                                        errors.state
+                                                            ? "border-red-500 focus:ring-red-500/20"
+                                                            : "border-[var(--color-border)] focus:ring-[var(--color-primary)]/20"
+                                                    } focus:outline-none focus:ring-2 transition bg-white`}
+                                                >
+                                                    <option value="">
+                                                        {loadingStates ? "Loading..." : "Select State / Province"}
+                                                    </option>
+                                                    {states.map((s) => (
+                                                        <option key={s.id} value={s.iso2 || s.name}>
+                                                            {s.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {errors.state && (
+                                                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                                                        <AlertCircle size={12} /> {errors.state}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <Input
+                                                label="State / Province"
                                                 value={shippingAddress.state}
                                                 onChange={(e) =>
                                                     setShippingAddress((prev) => ({
@@ -699,25 +777,101 @@ export default function CheckoutPage() {
                                                         state: e.target.value,
                                                     }))
                                                 }
-                                                className={`w-full px-4 py-2.5 rounded-lg border ${
-                                                    errors.state
-                                                        ? "border-red-500"
-                                                        : "border-[var(--color-border)]"
-                                                } focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition bg-white`}
-                                            >
-                                                <option value="">Select State</option>
-                                                {US_STATES.map((s) => (
-                                                    <option key={s} value={s}>
-                                                        {s}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {errors.state && (
-                                                <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                                    <AlertCircle size={12} /> {errors.state}
-                                                </p>
-                                            )}
-                                        </div>
+                                                error={errors.state}
+                                                placeholder="State or Province"
+                                                required
+                                            />
+                                        )}
+                                        {/* City: autocomplete when we have cities from API, else plain input */}
+                                        {cities.length > 0 ? (
+                                            <div className="relative">
+                                                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
+                                                    City <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={shippingAddress.city}
+                                                    onChange={(e) => {
+                                                        setShippingAddress((prev) => ({
+                                                            ...prev,
+                                                            city: e.target.value,
+                                                        }));
+                                                        setCityDropdownOpen(true);
+                                                    }}
+                                                    onFocus={() => setCityDropdownOpen(true)}
+                                                    onBlur={() =>
+                                                        setTimeout(() => setCityDropdownOpen(false), 150)
+                                                    }
+                                                    placeholder={
+                                                        loadingCities
+                                                            ? "Loading cities..."
+                                                            : "Type to search or select"
+                                                    }
+                                                    disabled={loadingCities}
+                                                    className={`w-full px-4 py-2.5 rounded-lg border ${
+                                                        errors.city
+                                                            ? "border-red-500 focus:ring-red-500/20"
+                                                            : "border-[var(--color-border)] focus:ring-[var(--color-primary)]/20"
+                                                    } focus:outline-none focus:ring-2 transition bg-white`}
+                                                />
+                                                {cityDropdownOpen && (
+                                                    <div className="absolute z-10 w-full mt-0.5 bg-white border border-[var(--color-border)] rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                        {(() => {
+                                                            const filtered = cities.filter((c) =>
+                                                                !shippingAddress.city
+                                                                    ? true
+                                                                    : c.name
+                                                                          .toLowerCase()
+                                                                          .includes(
+                                                                              shippingAddress.city.toLowerCase()
+                                                                          )
+                                                            ).slice(0, 12);
+                                                            return filtered.length > 0 ? (
+                                                                filtered.map((c) => (
+                                                                    <button
+                                                                        key={c.id}
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setShippingAddress((prev) => ({
+                                                                                ...prev,
+                                                                                city: c.name,
+                                                                            }));
+                                                                            setCityDropdownOpen(false);
+                                                                        }}
+                                                                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--color-primary)]/10 transition"
+                                                                    >
+                                                                        {c.name}
+                                                                    </button>
+                                                                ))
+                                                            ) : (
+                                                                <p className="px-4 py-2.5 text-xs text-[var(--color-text-secondary)]">
+                                                                    Type your city if not listed
+                                                                </p>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                )}
+                                                {errors.city && (
+                                                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                                                        <AlertCircle size={12} /> {errors.city}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <Input
+                                                label="City"
+                                                value={shippingAddress.city}
+                                                onChange={(e) =>
+                                                    setShippingAddress((prev) => ({
+                                                        ...prev,
+                                                        city: e.target.value,
+                                                    }))
+                                                }
+                                                error={errors.city}
+                                                placeholder="City"
+                                                required
+                                            />
+                                        )}
                                         <Input
                                             label="ZIP Code"
                                             value={shippingAddress.zipCode}
@@ -827,28 +981,19 @@ export default function CheckoutPage() {
                                                 error={errors.bilCity}
                                                 required
                                             />
-                                            <div>
-                                                <label className="block text-sm font-medium mb-1.5">
-                                                    State <span className="text-red-500">*</span>
-                                                </label>
-                                                <select
-                                                    value={billingAddress.state}
-                                                    onChange={(e) =>
-                                                        setBillingAddress((prev) => ({
-                                                            ...prev,
-                                                            state: e.target.value,
-                                                        }))
-                                                    }
-                                                    className="w-full px-4 py-2.5 rounded-lg border border-[var(--color-border)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 bg-white"
-                                                >
-                                                    <option value="">Select State</option>
-                                                    {US_STATES.map((s) => (
-                                                        <option key={s} value={s}>
-                                                            {s}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
+                                            <Input
+                                                label="State / Province"
+                                                value={billingAddress.state}
+                                                onChange={(e) =>
+                                                    setBillingAddress((prev) => ({
+                                                        ...prev,
+                                                        state: e.target.value,
+                                                    }))
+                                                }
+                                                error={errors.bilState}
+                                                placeholder="State or Province"
+                                                required
+                                            />
                                             <Input
                                                 label="ZIP Code"
                                                 value={billingAddress.zipCode}
@@ -1029,8 +1174,9 @@ export default function CheckoutPage() {
                                             <>, {shippingAddress.address2}</>
                                         )}
                                         <br />
-                                        {shippingAddress.city}, {shippingAddress.state}{" "}
-                                        {shippingAddress.zipCode}
+                                        {shippingAddress.city},{" "}
+                                        {getStateDisplayName(shippingAddress.state)}
+                                        {shippingAddress.zipCode && ` ${shippingAddress.zipCode}`}
                                     </p>
                                 </div>
                             </div>
@@ -1110,8 +1256,9 @@ export default function CheckoutPage() {
                                             <br />
                                             {shippingAddress.address1}
                                             <br />
-                                            {shippingAddress.city}, {shippingAddress.state}{" "}
-                                            {shippingAddress.zipCode}
+                                            {shippingAddress.city},{" "}
+                                            {getStateDisplayName(shippingAddress.state)}
+                                            {shippingAddress.zipCode && ` ${shippingAddress.zipCode}`}
                                         </p>
                                     </div>
                                     <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">

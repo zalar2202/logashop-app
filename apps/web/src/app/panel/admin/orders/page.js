@@ -23,6 +23,7 @@ import {
 import axios from "axios";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ContentWrapper } from "@/components/layout/ContentWrapper";
 
 const STATUS_OPTIONS = [
     { value: "", label: "All Statuses", color: "bg-gray-100 text-gray-700" },
@@ -132,7 +133,8 @@ export default function AdminOrdersPage() {
     // Table rendering uses orders directly now
 
     return (
-        <div className="space-y-6">
+        <ContentWrapper>
+            <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
@@ -422,6 +424,7 @@ export default function AdminOrdersPage() {
                     </div>
                 )}
             </div>
-        </div>
+            </div>
+        </ContentWrapper>
     );
 }

@@ -11,20 +11,17 @@ import * as Yup from "yup";
 export const sendNotificationSchema = Yup.object({
     recipientType: Yup.string()
         .required("Recipient type is required")
-        .oneOf(["single", "multiple", "all", "role"], "Invalid recipient type"),
-    
+        .oneOf(["single", "all", "role"], "Invalid recipient type"),
+
     recipients: Yup.mixed().when("recipientType", {
         is: "single",
         then: (schema) => schema.required("Please select a user"),
-        otherwise: (schema) => schema.when("recipientType", {
-            is: "multiple",
-            then: (schema) => schema
-                .test("is-array", "Please select at least one user", (value) => Array.isArray(value) && value.length > 0),
-            otherwise: (schema) => schema.when("recipientType", {
+        otherwise: (schema) =>
+            schema.when("recipientType", {
                 is: "role",
                 then: (schema) => schema.required("Please select a role"),
+                otherwise: () => Yup.mixed().notRequired(),
             }),
-        }),
     }),
 
     title: Yup.string()

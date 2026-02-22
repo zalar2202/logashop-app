@@ -2757,3 +2757,24 @@ html {
         var(--maintain-color-hover) 100%
     );
 }
+
+/* ===================================
+   Product Description - restore list styles
+   (Tailwind preflight sets list-style: none on ol, ul, menu)
+   =================================== */
+
+.product-description-content ul {
+    list-style: disc;
+    list-style-position: outside;
+    padding-left: 1.5em;
+}
+
+.product-description-content ol {
+    list-style: decimal;
+    list-style-position: outside;
+    padding-left: 1.5em;
+}
+
+.product-description-content li {
+    margin-bottom: 0.25em;
+}

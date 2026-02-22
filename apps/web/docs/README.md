@@ -10,6 +10,8 @@ This folder contains documentation **for developers** working on the LogaShop e-
 | -------- | ------- |
 | **[README.md](README.md)** (this file) | Overview, scope, status, and how to get started |
 | **[DATA_MODELS.md](DATA_MODELS.md)** | Database schema: all models, fields, relationships, indexes |
+| **[GEO_API.md](GEO_API.md)** | Country/State/City API: config, routes, checkout & shipping zones |
+| **[COUNTRY_STATE_FEATURE.md](COUNTRY_STATE_FEATURE.md)** | Country/State/City implementation notes: checkout, shipping zones, index fix |
 | **[ROADMAP.md](ROADMAP.md)** | Detailed phase-by-phase task breakdown and timeline |
 
 ---
@@ -152,12 +154,11 @@ All planned MVP phases (0–8) are **complete**. The app is in polish / pre-laun
 
 Beyond the original roadmap, the codebase also includes:
 
-- **Blog:** BlogPost, BlogCategory, admin blog UI, comments
-- **Invoicing:** Invoice model, invoice management (panel)
-- **Accounting:** Expenses, AccountingStats, transactions, CSV export
+- **Tags:** Tag collection for products (and future: posts, portfolio). Autocomplete, normalization, unification of related items. `GET /api/tags`, `TagsInputField`, `npm run seed:tags`.
+- **Accounting:** Order-based sales, expenses, AccountingStats, CSV export (orders, expenses)
 - **Support:** Ticket model, ticket management
-- **Media:** Media model, media library, MediaPicker
-- **Other:** Marketing page, Settings, User management, Auth middleware, Components demo, AI Assistant (admin)
+- **Newsletter & Email Marketing:** Subscriber model, homepage/footer signup, Email Marketing ("All Subscribers"), unsubscribe
+- **Other:** Settings, User management, Auth middleware, Components demo, AI Assistant (admin)
 
 For the **full task-level breakdown** (every checkbox and deliverable), see **[ROADMAP.md](ROADMAP.md)**.
 
@@ -208,5 +209,5 @@ The **root README.md** (repository root) is intended for a short, public-facing 
 
 ## Quick reference
 
-- **Data layer:** [DATA_MODELS.md](DATA_MODELS.md) — schemas, relationships, indexes, “other” models (Invoice, Payment, Blog, etc.)
+- **Data layer:** [DATA_MODELS.md](DATA_MODELS.md) — schemas, relationships, indexes, “other” models (Subscriber, Payment, Blog, etc.)
 - **Full phase breakdown:** [ROADMAP.md](ROADMAP.md) — every phase, task list, and deliverable in detail.

@@ -44,12 +44,13 @@ export const NotificationDropdown = () => {
         return () => clearInterval(interval);
     }, [dispatch]);
 
-    // Fetch notifications when dropdown opens
+    // Fetch notifications and unread count when dropdown opens (always refetch to show new ones)
     useEffect(() => {
-        if (isOpen && notifications.length === 0) {
+        if (isOpen) {
             dispatch(fetchNotifications({ page: 1, limit: 5, read: null }));
+            dispatch(fetchUnreadCount());
         }
-    }, [isOpen, notifications.length, dispatch]);
+    }, [isOpen, dispatch]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -257,7 +258,7 @@ export const NotificationDropdown = () => {
                             style={{ borderColor: "var(--color-border)" }}
                         >
                             <Link
-                                href="/panel/notifications"
+                                href="/panel/admin/notifications"
                                 onClick={() => setIsOpen(false)}
                                 className="block text-center text-sm font-medium hover:underline"
                                 style={{ color: "var(--color-primary)" }}

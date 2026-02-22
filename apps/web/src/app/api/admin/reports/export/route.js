@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import { verifyAuth } from "@/lib/auth";
 import Order from "@/models/Order";
-import Invoice from "@/models/Invoice";
 import Expense from "@/models/Expense";
 
 const escapeCSV = (val) => {
@@ -23,9 +22,9 @@ export async function GET(request) {
         }
 
         const { searchParams } = new URL(request.url);
-        const type = searchParams.get("type"); // orders, invoices, expenses
+        const type = searchParams.get("type"); // orders, expenses
 
-        if (!["orders", "invoices", "expenses"].includes(type)) {
+        if (!["orders", "expenses"].includes(type)) {
             return NextResponse.json({ error: "Invalid report type" }, { status: 400 });
         }
 
@@ -50,38 +49,9 @@ export async function GET(request) {
                 escapeCSV(new Date(order.createdAt).toLocaleDateString()),
                 escapeCSV(`${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`),
                 escapeCSV(order.guestEmail || "N/A"),
-                escapeCSV(order.totalAmount || order.total),
+                escapeCSV(order.total),
                 escapeCSV(order.status),
                 escapeCSV(order.paymentMethod),
-            ]);
-            csvContent = [headers, ...rows].map((e) => e.join(",")).join("\n");
-        } else if (type === "invoices") {
-            const data = await Invoice.find()
-                .populate("user", "name email")
-                .populate("orderId", "orderNumber")
-                .sort({ createdAt: -1 })
-                .lean();
-            filename = `invoices-report-${new Date().toISOString().split("T")[0]}.csv`;
-
-            const headers = [
-                "Invoice #",
-                "Date",
-                "Customer",
-                "Order #",
-                "Amount",
-                "Currency",
-                "Status",
-                "Due Date",
-            ];
-            const rows = data.map((inv) => [
-                escapeCSV(inv.invoiceNumber),
-                escapeCSV(new Date(inv.issueDate || inv.createdAt).toLocaleDateString()),
-                escapeCSV(inv.user?.name || inv.user?.email || "N/A"),
-                escapeCSV(inv.orderId?.orderNumber || "—"),
-                escapeCSV(inv.total),
-                escapeCSV(inv.currency),
-                escapeCSV(inv.status),
-                escapeCSV(new Date(inv.dueDate).toLocaleDateString()),
             ]);
             csvContent = [headers, ...rows].map((e) => e.join(",")).join("\n");
         } else if (type === "expenses") {

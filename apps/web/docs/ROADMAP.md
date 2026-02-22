@@ -221,7 +221,7 @@ Detailed phase-by-phase task breakdown for LogaShop. For an overview of what’s
 - [x] Low stock alert email template
 - [x] Shop notification helpers (order lifecycle dispatch)
 - [x] Notification service layer (`services/notification.service.js`)
-- [x] Admin notification send UI (`/panel/notifications/send`)
+- [x] Admin notification send UI (`/panel/admin/notifications/send`)
 - [x] NotificationContext for real-time in-app notifications
 - [x] NotificationDropdown component in layout
 
@@ -263,8 +263,7 @@ Detailed phase-by-phase task breakdown for LogaShop. For an overview of what’s
 
 ### Models
 
-- [x] Promotion (model created)
-- [x] Coupon
+- [x] Coupon (discount codes; no separate Promotion model)
 - [x] Review
 
 ### Features
@@ -318,34 +317,29 @@ Detailed phase-by-phase task breakdown for LogaShop. For an overview of what’s
 
 > Features built alongside the main phases
 
-### Blog System
+### Tag System
 
-- [x] BlogPost model (with SEO fields, rich content)
-- [x] BlogCategory model
-- [x] Admin blog management (`/panel/blog`)
+- [x] Tag model (name, slug, postType: product | post | portfolio)
+- [x] `GET /api/tags` (search, postType filter)
+- [x] Tag sync on product create/update
+- [x] TagsInputField with autocomplete & chip UI
+- [x] `npm run seed:tags` — populate from existing products
+
+### (Removed: Blog — app is product-shop only; blog system removed.)
 
 ### (Removed: CRM / Clients — app is product-shop only; clients and packages were removed.)
 
-### Invoicing
-
-- [x] Invoice model
-- [x] Invoice management (`/panel/invoices`)
+### (Removed: Invoicing — app uses Orders for sales; Invoice model and panel removed.)
 
 ### Accounting
 
 - [x] Expense model
-- [x] Accounting module (`/panel/accounting`)
+- [x] Admin accounting module (`/panel/admin/accounting`) — revenue from Orders, expenses, CSV export
 
 ### Support / Tickets
 
 - [x] Ticket model (with comments)
-- [x] Ticket management (`/panel/tickets`)
-
-### Media Library
-
-- [x] Media model
-- [x] Media management (`/panel/media`)
-- [x] MediaPicker component for reuse
+- [x] Ticket management (`/panel/admin/tickets`)
 
 ### AI Assistant
 
@@ -354,13 +348,12 @@ Detailed phase-by-phase task breakdown for LogaShop. For an overview of what’s
 
 ### Other
 
-- [x] Marketing page (`/panel/marketing`)
+- [x] Marketing page (`/panel/admin/marketing`)
 - (Removed: Services & Packages — product-shop only.)
-- [x] Settings page (`/panel/settings`)
-- [x] Admin user management (`/panel/users`)
+- [x] Settings page (`/account/profile`, merged from `/panel/settings`)
+- [x] Admin user management (`/panel/admin/users`)
 - [x] Redux store setup (`@reduxjs/toolkit`)
-- [x] Components demo page (`/panel/components-demo`)
-- [x] Comment model (blog comments)
+- [x] Components demo page (`/panel/manager/components-demo`)
 - [x] Auth middleware (route protection)
 
 ---

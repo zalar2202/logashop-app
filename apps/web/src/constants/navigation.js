@@ -2,30 +2,24 @@ import {
     LayoutDashboard,
     Users,
     Blocks,
-    UserPlus,
     Database,
-    Network,
-    Bell,
     Send,
-    Settings,
     Tag,
     Mail,
-    Building2,
+    Megaphone,
     FileText,
     CreditCard,
     Ticket,
     Activity,
     ShoppingCart,
-    Store,
     Bot,
     Calculator,
     PenSquare,
-    Image as ImageIcon,
     MessageSquare,
     Package,
     List,
     Truck,
-    Heart,
+    FlaskConical,
 } from "lucide-react";
 
 export const navigation = [
@@ -33,16 +27,6 @@ export const navigation = [
         name: "Dashboard",
         href: "/panel/dashboard",
         icon: LayoutDashboard,
-    },
-    {
-        name: "Shop Storefront",
-        href: "/",
-        icon: Store,
-    },
-    {
-        name: "My Wishlist",
-        href: "/wishlist",
-        icon: Heart,
     },
     {
         name: "My Cart",
@@ -56,29 +40,13 @@ export const navigation = [
         icon: Package,
         roles: ["user"],
     },
-    {
-        name: "Support Tickets",
-        href: "/panel/tickets",
-        icon: Ticket,
-        roles: ["user"],
-    },
-    {
-        name: "Notifications",
-        href: "/panel/notifications",
-        icon: Bell,
-    },
-    {
-        name: "Settings",
-        href: "/panel/settings",
-        icon: Settings,
-    },
 ];
 
 // Admin-only navigation items
 export const adminNavigation = [
     {
         name: "User Management",
-        href: "/panel/users",
+        href: "/panel/admin/users",
         icon: Users,
         roles: ["admin", "manager"],
     },
@@ -119,6 +87,12 @@ export const adminNavigation = [
         icon: MessageSquare,
         roles: ["admin"],
     },
+    {
+        name: "Support Tickets",
+        href: "/panel/admin/tickets",
+        icon: Ticket,
+        roles: ["admin", "manager"],
+    },
     // Shared modules
     {
         name: "Accounting",
@@ -128,22 +102,27 @@ export const adminNavigation = [
     },
     {
         name: "Send Notification",
-        href: "/panel/notifications/send",
+        href: "/panel/admin/notifications/send",
         icon: Send,
+        roles: ["admin", "manager"],
+    },
+    {
+        name: "Email Marketing",
+        href: "/panel/admin/marketing",
+        icon: Megaphone,
         roles: ["admin", "manager"],
     },
 ];
 
-// Development/Testing pages
+// Manager tools index and development/testing pages
+export const managerNavItem = {
+    name: "Dev & Testing",
+    href: "/panel/manager",
+    icon: FlaskConical,
+};
+
+// Development/Testing pages (under /panel/manager/)
 export const devNavigation = [
-    {
-        name: "Components Demo",
-        href: "/panel/components-demo",
-        icon: Blocks,
-    },
-    {
-        name: "Debug Auth",
-        href: "/panel/debug-auth",
-        icon: Database,
-    },
+    { name: "Components Demo", href: "/panel/manager/components-demo", icon: Blocks },
+    { name: "DB Tools", href: "/panel/manager/db-tools", icon: Database },
 ];

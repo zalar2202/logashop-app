@@ -3,7 +3,19 @@ import { verifyAuth } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Category from "@/models/Category"; // Ensure registered
+import Tag from "@/models/Tag";
 import { slugify } from "@/lib/utils";
+
+/** Normalize and sync tags to Tag collection */
+async function normalizeAndSyncTags(tagArray) {
+    if (!tagArray || !Array.isArray(tagArray)) return [];
+    const normalized = tagArray
+        .map((t) => (typeof t === "string" ? Tag.normalizeName(t) : ""))
+        .filter(Boolean);
+    const unique = [...new Set(normalized)];
+    await Tag.syncTags(unique, "product");
+    return unique;
+}
 
 /**
  * GET /api/products
@@ -149,6 +161,11 @@ export async function POST(req) {
         // Attach vendorId (if multi-vendor ready)
         // If strict single-store, this might just be the admin ID or null
         body.vendorId = user.id;
+
+        // Normalize tags and sync to Tag collection
+        if (body.tags?.length) {
+            body.tags = await normalizeAndSyncTags(body.tags);
+        }
 
         const product = await Product.create(body);
 

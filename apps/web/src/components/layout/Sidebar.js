@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
-import { navigation, adminNavigation } from "@/constants/navigation";
+import { navigation, adminNavigation, managerNavItem } from "@/constants/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
@@ -253,6 +253,73 @@ export const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
                                         </Link>
                                     );
                                 })}
+                            </>
+                        )}
+
+                    {/* Dev/Testing Tools (Manager role only) - links to /panel/manager */}
+                    {user &&
+                        user.role === "manager" &&
+                        managerNavItem && (
+                            <>
+                                {!isCollapsed && (
+                                    <div className="px-3 pt-4 pb-2">
+                                        <p
+                                            className="text-xs font-semibold uppercase tracking-wider"
+                                            style={{ color: "var(--color-text-tertiary)" }}
+                                        >
+                                            Dev & Testing
+                                        </p>
+                                    </div>
+                                )}
+                                {(() => {
+                                    const item = managerNavItem;
+                                    const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                                    const Icon = item.icon;
+                                    return (
+                                        <Link
+                                            key={item.name}
+                                            href={item.href}
+                                            onClick={() => {
+                                                if (window.innerWidth < 1024) {
+                                                    onClose();
+                                                }
+                                            }}
+                                            className={`
+                                            group relative flex items-center gap-3 px-3 rounded-lg
+                                            transition-all duration-200
+                                            ${isCollapsed ? "justify-center py-3" : "py-2.5"}
+                                            ${isActive ? "shadow-sm" : "hover:translate-x-0.5"}
+                                        `}
+                                            style={{
+                                                backgroundColor: isActive
+                                                    ? "var(--color-primary)"
+                                                    : "transparent",
+                                                color: isActive
+                                                    ? "#ffffff"
+                                                    : "var(--color-text-secondary)",
+                                            }}
+                                            title={isCollapsed ? item.name : undefined}
+                                        >
+                                            {isActive && !isCollapsed && (
+                                                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full" style={{ backgroundColor: "#ffffff" }} />
+                                            )}
+                                            <Icon
+                                                className={`flex-shrink-0 transition-transform group-hover:scale-110 ${
+                                                    isCollapsed ? "w-6 h-6" : "w-5 h-5"
+                                                }`}
+                                            />
+                                            {!isCollapsed && (
+                                                <span className="font-medium text-sm">{item.name}</span>
+                                            )}
+                                            {isCollapsed && (
+                                                <div className="absolute left-full ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
+                                                    {item.name}
+                                                    <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
+                                                </div>
+                                            )}
+                                        </Link>
+                                    );
+                                })()}
                             </>
                         )}
                 </nav>

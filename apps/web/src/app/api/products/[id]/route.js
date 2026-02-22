@@ -3,6 +3,18 @@ import { verifyAuth } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Category from "@/models/Category";
+import Tag from "@/models/Tag";
+
+/** Normalize and sync tags to Tag collection */
+async function normalizeAndSyncTags(tagArray) {
+    if (!tagArray || !Array.isArray(tagArray)) return [];
+    const normalized = tagArray
+        .map((t) => (typeof t === "string" ? Tag.normalizeName(t) : ""))
+        .filter(Boolean);
+    const unique = [...new Set(normalized)];
+    await Tag.syncTags(unique, "product");
+    return unique;
+}
 
 /**
  * GET /api/products/[id]
@@ -57,6 +69,11 @@ export async function PUT(req, { params }) {
             const existing = await Product.findOne({ sku: body.sku, _id: { $ne: id } });
             if (existing)
                 return NextResponse.json({ error: "SKU already exists" }, { status: 400 });
+        }
+
+        // Normalize tags and sync to Tag collection
+        if (body.tags?.length) {
+            body.tags = await normalizeAndSyncTags(body.tags);
         }
 
         const product = await Product.findByIdAndUpdate(id, body, {

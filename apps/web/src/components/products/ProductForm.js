@@ -6,8 +6,10 @@ import { Card } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
 import { Badge } from "@/components/common/Badge";
 import { InputField } from "@/components/forms/InputField";
+import { TagsInputField } from "@/components/forms/TagsInputField";
 import { SelectField } from "@/components/forms/SelectField";
 import { TextareaField } from "@/components/forms/TextareaField";
+import { RichTextEditor } from "@/components/forms/RichTextEditor";
 import { CheckboxField } from "@/components/forms/CheckboxField";
 import { VariantsManager } from "@/components/products/VariantsManager";
 import { productSchema, productInitialValues } from "@/schemas/product.schema";
@@ -143,15 +145,9 @@ export function ProductForm({
 
     // Handle form submission
     const handleSubmit = async (values, formikHelpers) => {
-        // Process tags from string to array
         const formattedValues = {
             ...values,
-            tags: values.tags
-                ? values.tags
-                      .split(",")
-                      .map((t) => t.trim())
-                      .filter(Boolean)
-                : [],
+            tags: Array.isArray(values.tags) ? values.tags : [],
             images: images,
             options: options,
             variants: variants,
@@ -166,8 +162,10 @@ export function ProductForm({
                 ...productInitialValues,
                 ...initialValues,
                 tags: Array.isArray(initialValues.tags)
-                    ? initialValues.tags.join(", ")
-                    : initialValues.tags || "",
+                    ? initialValues.tags
+                    : typeof initialValues.tags === "string" && initialValues.tags
+                    ? initialValues.tags.split(",").map((t) => t.trim()).filter(Boolean)
+                    : [],
                 categoryId: initialValues.categoryId?._id || initialValues.categoryId || "",
             }}
             validationSchema={productSchema}
@@ -236,11 +234,10 @@ export function ProductForm({
                                         placeholder="e.g. Sony, Apple, Samsung"
                                     />
 
-                                    <InputField
+                                    <TagsInputField
                                         name="tags"
                                         label="Tags"
-                                        placeholder="Comma separated: wireless, bluetooth, audio"
-                                        helperText="Separate tags with commas"
+                                        placeholder="Type a tag and press Enter or click Add"
                                     />
                                 </div>
                             </Card>
@@ -256,13 +253,20 @@ export function ProductForm({
                                         rows={2}
                                         helperText="Max 200 characters, shown in product cards"
                                     />
-                                    <TextareaField
-                                        name="description"
-                                        label="Full Description"
-                                        placeholder="Detailed product description..."
-                                        rows={6}
-                                        required
-                                    />
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1.5 text-[var(--color-text-primary)]">
+                                            Full Description <span className="text-red-500">*</span>
+                                        </label>
+                                        <RichTextEditor
+                                            value={values.description || ""}
+                                            onChange={(html) => setFieldValue("description", html)}
+                                            placeholder="Detailed product description with formatting, lists, links..."
+                                            minHeight={220}
+                                        />
+                                        <p className="text-xs text-[var(--color-text-tertiary)] mt-1">
+                                            Supports bold, italic, lists, and links
+                                        </p>
+                                    </div>
                                 </div>
                             </Card>
 

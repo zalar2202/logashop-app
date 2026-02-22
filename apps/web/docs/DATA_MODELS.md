@@ -31,7 +31,7 @@ erDiagram
 ```
 
 - **Product images** are embedded in `Product` as `images[]` (no separate ProductImage collection).
-- **Order payment** is stored on `Order` (paymentIntentId, paidAt, paymentStatus, paymentMethod). A separate `Payment` model exists for CRM/Invoice flows (see Other models).
+- **Order payment** is stored on `Order` (paymentIntentId, paidAt, paymentStatus, paymentMethod). No separate Payment model; all payments flow through Order checkout.
 
 ---
 
@@ -147,7 +147,7 @@ Product {
 
   productType: 'physical' | 'digital' | 'bundle',
   categoryId: ObjectId (ref: Category),
-  tags: [String],
+  tags: [String],           // Normalized; synced to Tag collection for autocomplete & unification
   brand: String,
 
   basePrice: Number (cents),
@@ -210,6 +210,27 @@ ProductVariant {
 ```
 
 (Product images are embedded in **Product** as `images[]`; there is no separate ProductImage model.)
+
+### 5a. Tag
+
+Tags live in their own collection for **autocomplete, spelling consistency, and unifying related items**. Product `tags: [String]` are normalized and synced to Tag on create/update.
+
+```javascript
+Tag {
+  _id: ObjectId,
+  name: String (lowercase, trimmed),
+  slug: String,
+  postType: 'product' | 'post' | 'portfolio',  // Future: blog, portfolio, etc.
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+- **Unique:** `(name, postType)` — e.g. `"premium"` can exist for products and blog posts separately.
+- **Sync:** On product save, `Tag.syncTags(tags, 'product')` upserts each tag.
+- **API:** `GET /api/tags?search=xxx&postType=product` — returns tag names for autocomplete.
+- **Component:** `TagsInputField` (Formik) supports `postType` prop; fetches suggestions from API.
+- **Seed:** `npm run seed:tags` populates Tag from existing product tags.
 
 ---
 
@@ -296,7 +317,7 @@ Order {
 }
 ```
 
-Order payment is stored on **Order** (paymentIntentId, paidAt, paymentStatus, paymentMethod). A separate **Payment** model exists for CRM/Invoicing (client + invoice); see Other models.
+Order payment is stored on **Order** (paymentIntentId, paidAt, paymentStatus, paymentMethod). No separate Payment model; all payments flow through Order checkout.
 
 ### 8. DigitalDelivery
 
@@ -460,32 +481,47 @@ Product: { slug: 1 }, { categoryId: 1, status: 1 }, { vendorId: 1 }
 ProductVariant: { productId: 1 }, { sku: 1 }
 Order: { orderNumber: 1 }, { userId: 1 }, { trackingCode: 1 }, { status: 1 }
 Category: { slug: 1 }, { parentId: 1 }, { isActive: 1 }
+Tag: { name: 1, postType: 1 } (unique), { postType: 1 }
 Cart: { userId: 1 }, { sessionId: 1 } (each unique, sparse)
 Wishlist: { userId: 1 }, { sessionId: 1 } (each unique, sparse)
 Review: { productId: 1, userId: 1 } (unique), { productId: 1 }, { userId: 1 }, { status: 1 }
 DigitalDelivery: { orderId: 1 }, { downloadToken: 1 }
-ShippingZone: { countries: 1, states: 1, isActive: 1 }, { isDefault: 1 }
+ShippingZone: { countries: 1, isActive: 1 }, { isDefault: 1 } — MongoDB forbids compound indexes on two array fields ("parallel arrays"); state filtering is in-memory.
+Subscriber: { email: 1 } (unique), { status: 1 }
 ```
 
 ---
 
 ## Other models (in codebase)
 
-These exist in `src/models/` and are used by the admin/CRM/blog features:
+These exist in `src/models/` and are used by the admin features:
 
 | Model | Purpose |
 | ----- | ------- |
-| **Payment** | Manual payment records (userId/customer + optional invoice, method, amount, status); not order checkout. |
-| **Invoice** | Invoices linked to Order and/or User (customer); status, items, totals. |
+| **Tag** | Tag master list for products (and future: posts, portfolio). Autocomplete, normalization, unification. See §5a. |
 | **Expense** | Accounting expenses. |
 | **Notification** | In-app / push notifications (e.g. FCM). |
-| **BlogPost** | Blog posts with SEO fields, rich content. |
-| **BlogCategory** | Blog categories. |
-| **Comment** | Blog comments. |
-| **Media** | Media library entries. |
 | **Ticket** | Support tickets (with comments). |
-| **Promotion** | Promotions (model exists). |
 | **AIAssistant** | AI assistant state/sessions. |
+| **Subscriber** | Newsletter subscribers (email, status, source). Used by homepage/footer signup and Email Marketing "All Subscribers". |
+
+### Subscriber (Newsletter)
+
+```javascript
+Subscriber {
+  _id: ObjectId,
+  email: String (unique, lowercase),
+  status: 'subscribed' | 'unsubscribed',
+  source: 'homepage' | 'footer',
+  subscribedAt: Date,
+  unsubscribedAt: Date,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+- **Indexes:** `{ email: 1 }` (unique), `{ status: 1 }`
+- **API:** `POST /api/subscribers` (public subscribe), `GET /api/subscribers` (admin list)
 
 ---
 
@@ -496,3 +532,4 @@ These exist in `src/models/` and are used by the admin/CRM/blog features:
 3. **Timestamps**: Mongoose `timestamps: true` on all models.
 4. **vendorId** on Product is optional and multi-vendor ready.
 5. **Order numbers** are auto-generated as `LSYYMM-XXXXX`; **tracking codes** for guests are 12-char alphanumeric.
+6. **Tag normalization:** Tag names are lowercased, trimmed, spaces→hyphens. Product tags sync to Tag collection on save. Use `postType` to scope tags (product, post, portfolio).

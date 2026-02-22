@@ -39,25 +39,28 @@ export async function PUT(request) {
         if (contentType.includes('multipart/form-data')) {
             // FormData (with file upload)
             const formData = await request.formData();
-            updateData.name = formData.get('name');
+            const formName = formData.get('name');
+            const formFirstName = formData.get('firstName');
+            const formLastName = formData.get('lastName');
+            if (formName) {
+                updateData.name = formName;
+            } else if (formFirstName !== null || formLastName !== null) {
+                updateData.name = `${formFirstName || ''} ${formLastName || ''}`.trim();
+            }
             updateData.phone = formData.get('phone');
             updateData.bio = formData.get('bio');
             avatarFile = formData.get('avatar');
-
-            // Handle technicalDetails if sent as JSON string in FormData
-            const techDetails = formData.get('technicalDetails');
-            if (techDetails) {
-                try {
-                    updateData.technicalDetails = JSON.parse(techDetails);
-                } catch (e) {
-                    console.error('Error parsing technicalDetails from FormData:', e);
-                }
-            }
         } else {
             // JSON (without file upload)
             updateData = await request.json();
         }
 
+        // Support firstName/lastName (combine to name) for account profile
+        if (updateData.firstName !== undefined || updateData.lastName !== undefined) {
+            const first = (updateData.firstName || '').trim();
+            const last = (updateData.lastName || '').trim();
+            updateData.name = `${first} ${last}`.trim();
+        }
         if (!updateData.name || updateData.name.trim().length < 2) {
             return errorResponse('Name is required and must be at least 2 characters', 400);
         }
@@ -80,12 +83,6 @@ export async function PUT(request) {
         if (updateData.phone !== undefined) fullUser.phone = updateData.phone ? updateData.phone.trim() : '';
         if (updateData.bio !== undefined) fullUser.bio = updateData.bio ? updateData.bio.trim() : '';
         if (updateData.avatar) fullUser.avatar = updateData.avatar;
-        if (updateData.technicalDetails !== undefined) {
-            fullUser.technicalDetails = {
-                ...fullUser.technicalDetails,
-                ...updateData.technicalDetails
-            };
-        }
 
         await fullUser.save();
 
@@ -100,7 +97,6 @@ export async function PUT(request) {
                 phone: fullUser.phone,
                 avatar: fullUser.avatar,
                 bio: fullUser.bio,
-                technicalDetails: fullUser.technicalDetails,
                 lastLogin: fullUser.lastLogin,
                 createdAt: fullUser.createdAt,
                 preferences: fullUser.preferences,

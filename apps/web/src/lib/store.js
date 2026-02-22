@@ -4,10 +4,7 @@ import notificationsReducer from "@/features/notifications/notificationsSlice";
 import productsReducer from "@/features/products/productsSlice";
 
 // Import other slices here as we create them
-// import companiesReducer from "@/features/companies/companiesSlice";
 // import transactionsReducer from "@/features/transactions/transactionsSlice";
-// import paymentsReducer from "@/features/payments/paymentsSlice";
-// import promotionsReducer from "@/features/promotions/promotionsSlice";
 
 export const makeStore = () => {
     return configureStore({
@@ -16,10 +13,7 @@ export const makeStore = () => {
             notifications: notificationsReducer,
             products: productsReducer,
             // Add other reducers here as we create them
-            // companies: companiesReducer,
             // transactions: transactionsReducer,
-            // payments: paymentsReducer,
-            // promotions: promotionsReducer,
         },
         middleware: (getDefaultMiddleware) =>
             getDefaultMiddleware({
@@ -38,7 +32,4 @@ export const store = makeStore();
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export const selectUsers = (state) => state.users;
 export const selectNotifications = (state) => state.notifications;
-export const selectCompanies = (state) => state.companies;
 export const selectTransactions = (state) => state.transactions;
-export const selectPayments = (state) => state.payments;
-export const selectPromotions = (state) => state.promotions;

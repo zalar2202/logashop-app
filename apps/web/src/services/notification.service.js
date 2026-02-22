@@ -87,7 +87,8 @@ export const getNotifications = async ({ page = 1, limit = 20, read = null, type
 export const getUnreadCount = async () => {
     try {
         const response = await axios.get('/api/notifications/count');
-        return response.data.count;
+        // API returns { success: true, data: { count } }
+        return response.data?.data?.count ?? response.data?.count ?? 0;
     } catch (error) {
         console.error('Error fetching unread count:', error);
         throw error;

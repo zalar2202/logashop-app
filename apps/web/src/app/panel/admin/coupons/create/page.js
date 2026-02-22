@@ -7,11 +7,9 @@ import { Card } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
 import { InputField } from "@/components/forms/InputField";
 import { Checkbox } from "@/components/common/Checkbox";
-import { ChevronLeft, Save, Ticket } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
-import Link from "next/link";
-
 export default function CreateCouponPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
@@ -81,22 +79,25 @@ export default function CreateCouponPage() {
 
     return (
         <ContentWrapper>
-            <div className="max-w-4xl mx-auto">
-                <div className="flex items-center gap-4 mb-6">
-                    <Link href="/panel/admin/coupons">
-                        <Button variant="ghost" size="sm">
-                            <ChevronLeft size={18} />
-                        </Button>
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold">Create Coupon</h1>
-                        <p className="text-sm text-[var(--color-text-secondary)]">
-                            Set up a new discount code for your customers
-                        </p>
-                    </div>
-                </div>
+            {/* Header */}
+            <div className="mb-6">
+                <Button
+                    variant="secondary"
+                    icon={<ArrowLeft size={18} />}
+                    onClick={() => router.back()}
+                    className="mb-4"
+                >
+                    Back
+                </Button>
+                <h1 className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>
+                    Create Coupon
+                </h1>
+                <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                    Set up a new discount code for your customers
+                </p>
+            </div>
 
-                <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2 space-y-6">
                             <Card className="p-6">
@@ -243,7 +244,6 @@ export default function CreateCouponPage() {
                         </div>
                     </div>
                 </form>
-            </div>
         </ContentWrapper>
     );
 }

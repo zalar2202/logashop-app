@@ -52,9 +52,9 @@ export async function GET(req) {
             });
         }
 
-        // Admin — return all zones
+        // Admin/manager — return all zones
         const user = await verifyAuth(req);
-        if (user.role !== "admin") {
+        if (user.role !== "admin" && user.role !== "manager") {
             return NextResponse.json({ success: false, error: "Not authorized" }, { status: 403 });
         }
 
@@ -81,7 +81,7 @@ export async function POST(req) {
         await dbConnect();
         const user = await verifyAuth(req);
 
-        if (user.role !== "admin") {
+        if (user.role !== "admin" && user.role !== "manager") {
             return NextResponse.json({ success: false, error: "Not authorized" }, { status: 403 });
         }
 
@@ -101,6 +101,9 @@ export async function POST(req) {
                 { status: 400 }
             );
         }
+
+        // Sync indexes to drop the old parallel-array index if it exists
+        await ShippingZone.syncIndexes();
 
         const zone = await ShippingZone.create({
             name: name.trim(),

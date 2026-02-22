@@ -49,10 +49,6 @@ export const updateProfile = async (profileData) => {
             formData.append("phone", profileData.phone || "");
             formData.append("bio", profileData.bio || "");
             formData.append("avatar", profileData.avatar);
-            
-            if (profileData.technicalDetails) {
-                formData.append("technicalDetails", JSON.stringify(profileData.technicalDetails));
-            }
 
             const response = await axiosInstance.put("/api/auth/profile", formData, {
                 headers: {

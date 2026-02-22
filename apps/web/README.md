@@ -8,7 +8,7 @@ A modern e-commerce platform built with **Next.js** — storefront, checkout wit
 - **Payments** — Stripe (payment intents, webhooks)
 - **Digital & physical products** — Inventory, variants, secure downloads for digital goods
 - **Customer accounts** — Profile, addresses, order history, order tracking
-- **Admin panel** — Dashboard, catalog (products/categories), orders, coupons, reviews, shipping zones, blog, CRM, invoicing, accounting, support tickets, media library, and more
+- **Admin panel** — Dashboard, catalog (products/categories), orders, coupons, reviews, shipping zones, blog, CRM, invoicing, accounting, support tickets, and more
 
 ## Tech stack
 
